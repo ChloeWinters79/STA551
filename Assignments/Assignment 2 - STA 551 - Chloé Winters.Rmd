@@ -1,0 +1,286 @@
+---
+title: "Data Integration"
+author: "Chloé Winters"
+date: "2025-09-18"
+output:
+  html_document:
+    toc: yes
+    toc_float: yes
+    toc_depth: 4
+    fig_width: 6
+    fig_height: 4
+    fig_caption: yes
+    number_sections: yes
+    toc_collapsed: yes
+    code_folding: hide
+    code_download: yes
+    smooth_scroll: yes
+    theme: lumen
+  pdf_document: 
+    toc: yes
+    toc_depth: 4
+    fig_caption: yes
+    number_sections: yes
+  word_document:
+    toc: yes
+    toc_depth: '4'
+---
+
+<style type="text/css">
+h1.title {
+  font-size: 20px;
+  color: DarkRed;
+  text-align: center;
+}
+h4.author { /* Header 4 - and the author and data headers use this too  */
+    font-size: 18px;
+  font-family: "Times New Roman", Times, serif;
+  color: DarkRed;
+  text-align: center;
+}
+h4.date { /* Header 4 - and the author and data headers use this too  */
+  font-size: 18px;
+  font-family: "Times New Roman", Times, serif;
+  color: DarkBlue;
+  text-align: center;
+}
+h1 { /* Header 3 - and the author and data headers use this too  */
+    font-size: 22px;
+    font-family: "Times New Roman", Times, serif;
+    color: darkred;
+    text-align: center;
+}
+h2 { /* Header 3 - and the author and data headers use this too  */
+    font-size: 18px;
+    font-family: "Times New Roman", Times, serif;
+    color: navy;
+    text-align: left;
+}
+
+h3 { /* Header 3 - and the author and data headers use this too  */
+    font-size: 15px;
+    font-family: "Times New Roman", Times, serif;
+    color: navy;
+    text-align: left;
+}
+
+h4 { /* Header 4 - and the author and data headers use this too  */
+    font-size: 18px;
+    font-family: "Times New Roman", Times, serif;
+    color: darkred;
+    text-align: left;
+}
+</style>
+
+
+
+```{r setup, include=FALSE}
+# code chunk specifies whether the R code, warnings, and output 
+# will be included in the output files.
+library(knitr)
+knitr::opts_chunk$set(echo = TRUE,           # include code chunk in the output file
+                      warnings = FALSE,       # sometimes, you code may produce warning messages,
+                                              # you can choose to include the warning messages in
+                                              # the output file. 
+                      results = TRUE          # you can also decide whether to include the output
+                                              # in the output file.
+                      )   
+
+
+
+library(knitr)
+library(pander)
+library(mlbench)
+library(dplyr)
+library(readr)
+library(stringr)
+library(purrr)
+
+knitr::opts_chunk$set(echo = TRUE,      
+                      warnings = FALSE,   
+                      messages = FALSE,  
+                      results = TRUE,
+                      comment = NA
+                      )   
+
+```
+
+# Data Integration Assignment 
+
+## Summary of the Final Data Set
+
+The final data set created was named 'final_data_cleaned' the data consists of 3155 observations and 11 variables. The 11 variables are as follows,
+
+1. county_fips: (int) county identification number
+2. state: (chr) state name
+3. county_name: (chr) county name
+4. winner_votes: (int) total votes cast for the winning presidential canidate in the county
+5. party: (chr) "DEMOCRAT", "REPUBLICAN" the politcal party of the winning presidential canidate in the county
+6. Unemployment_Value: (num) unemployment value in the county
+7. Poverty_Value: (num) poverty value in the county 
+8. Less.than.a.high.school.dipoma..2015.2019: (num) percentage of people in the county with less than a high school diploma 2015 - 2019
+9. High.school.diploma,only..2015.2019: (num) percentage of people in the county with only a high school diploma 2015 - 2019
+10. Some.college.or.associate.s.degree..2015.2019: (num) percentage of people in the county with some college or an associates degree 2015 - 2019
+11. Bachelor.s.degree.or.higher..2015.2019: (num) percentage of people in the county with a bachelors (4 year) degree or higher 2015 - 2019
+
+## Data Integration Tasks
+
+Below is a description of all the data integration tasks each of the 4 data sources called for. The code utilized to complete the specific tasks for that data set is under that specific data sources section.  
+
+### Data Sources
+
+The datasets involved in this project are as follows:
+• Presidential Election Data: [countypresidential_election_2000-
+2020.csv]
+• Unemployment Data: [Unemployment.csv]
+• Poverty Data: [PovertyEstimates.csv]
+• Education Data: [Education.csv]
+
+```{r}
+
+# Read in the data sets from my GitHub
+
+url_president ="https://chloewinters79.github.io/STA551/Data/countypresidential_election_2000-2020.csv"
+president_raw = read.csv(url_president, header = TRUE)
+
+url_unemployment ="https://chloewinters79.github.io/STA551/Data/Unemployment.csv"
+unemployment_raw = read.csv(url_unemployment, header = TRUE)
+
+url_poverty ="https://chloewinters79.github.io/STA551/Data/PovertyEstimates.csv"
+poverty_raw = read.csv(url_poverty, header = TRUE)
+
+url_education ="https://chloewinters79.github.io/STA551/Data/Education.csv"
+education_raw = read.csv(url_education, header = TRUE)
+
+```
+
+### Specific Requirements for Data Preparation
+
+#### Presidential Election Data: The final analytical dataset should include the following information:
+
+o Presidential Election Data
+o Only use 2020 election data.
+o Retain data for the two major parties (Democrats and Republicans).
+o Aggregate the total votes and keep the winning party in the dataset.
+o Specific variables include:
+  ▪ County FIPS code
+  ▪ State name
+  ▪ County name
+  ▪ Total votes received by the winning party
+  ▪ Name of the winning party
+
+```{r} 
+president_2020 = subset(president_raw, year == "2020") # Keeps only 2020 election data
+president_party = subset(president_2020, party == "DEMOCRAT" | party == "REPUBLICAN") # Only Democratic and Republican candidates
+
+county_totals <- president_party %>% #creates new variable for votes of the winning candidate - also drops variables 
+  group_by(county_fips, state, county_name, party) %>%
+  summarise(winner_votes = sum(candidatevotes, na.rm = TRUE), .groups = "drop_last")
+
+# Keep only the winning party info in each county - final data set 
+president_clean <- county_totals %>%
+  slice_max(order_by = winner_votes, n = 1, with_ties = FALSE) %>%
+  ungroup() %>%
+  select(county_fips, 
+         state, 
+         county_name, 
+         winner_votes, 
+         party)
+```
+
+#### Unemployment Data
+
+Keep only 2020 unemployment data (or the most recent year if 2020 data is unavailable, retaining only one record per county. 
+Specific variables include:
+  o County FIPS code
+  o Unemployment rate
+
+```{r}
+unemployment_clean <- unemployment_raw %>%
+  # extract year from Attribute (last 4 characters)
+  mutate(year = as.integer(str_sub(Attribute, -4)),
+         attribute = str_remove(Attribute, "_\\d{4}$")) %>%  # remove year suffix from name
+  group_by(FIPS_Code) %>%
+  # keep only 2020 if available, otherwise most recent year
+  filter(year == 2020 | year == max(year)) %>%
+  slice_max(order_by = year, n = 1, with_ties = FALSE) %>%
+  rename(county_fips = FIPS_Code, 
+         Unemployment_Value = Value) %>%  #Renaming the variable so there is a common variable name for county fips and a                                           unique variable name for value since another data set we will be using has a                                              value variable
+  select(county_fips, 
+         Unemployment_Value) %>%
+  ungroup()
+```
+
+
+#### Poverty Data
+
+Keep only the 2019 poverty rate (variable name: PCTPOVALL_2019). 
+Specific variables include:
+  o County FIPS code
+
+```{r}
+poverty_2019 <- subset(poverty_raw, Attribute == "PCTPOVALL_2019")
+poverty_clean <- poverty_2019 %>%
+   rename(county_fips = FIPStxt, 
+         Poverty_Value = Value) %>% #Renaming the variable so there is a common variable name for county fips and a unique                                       variable name for value since another data set we will be using has a value variable
+  select(county_fips, 
+         Poverty_Value)
+```
+
+#### Education Data
+
+Keep only the percentage of education levels (2015–2019). Education levels to include:
+  o Less than a high school diploma
+  o High school diploma only
+  o Some college (1–3 years)
+  o Four-year college degree or higher
+Also include:
+  o County FIPS code
+After processing these datasets, merge them into a single dataset where each
+county has only one record.
+
+```{r}
+
+education_clean <- education_raw %>%
+  rename(county_fips = FIPS.Code) %>% #Renaming the variable so there's a common variable name
+  select(county_fips, 
+         Less.than.a.high.school.diploma..2015.19, 
+         High.school.diploma.only..2015.19, 
+         Some.college.or.associate.s.degree..2015.19, 
+         Bachelor.s.degree.or.higher..2015.19)
+
+```
+
+#### Final Merged Data Set
+
+After processing these data sets, merge them into a single dataset where each
+county has only one record and export the data set as csv file
+
+```{r}
+# Merging the 4 cleaned data sets by the common variable 'county_fips'
+final_data_cleaned <- list(
+  president_clean,
+  unemployment_clean,
+  poverty_clean,
+  education_clean
+) %>%
+  reduce(left_join, by = "county_fips")
+
+final_data_cleaned <- final_data_cleaned %>%
+  mutate(
+    `Less.than.a.high.school.diploma..2015.19` =
+      as.numeric(gsub(",", "", `Less.than.a.high.school.diploma..2015.19`)),
+    `High.school.diploma.only..2015.19` =
+      as.numeric(gsub(",", "", `High.school.diploma.only..2015.19`)),
+    `Some.college.or.associate.s.degree..2015.19` =
+      as.numeric(gsub(",", "", `Some.college.or.associate.s.degree..2015.19`)),
+    `Bachelor.s.degree.or.higher..2015.19` =
+      as.numeric(gsub(",", "", `Bachelor.s.degree.or.higher..2015.19`))
+  )
+
+    
+```
+
+```{r}
+write.csv(final_data_cleaned, "/Users/chloewinters/Desktop/Grad School/STA551/STA 551 - Fall 2025/final_data_cleaned.csv", row.names = FALSE)
+```
