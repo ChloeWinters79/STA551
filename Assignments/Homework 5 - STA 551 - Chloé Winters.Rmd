@@ -133,6 +133,7 @@ library(caret)
 library(MASS)
 library(pscl)
 library(ggplot2)
+library(pROC)
 
 
 knitr::opts_chunk$set(echo = TRUE,      
