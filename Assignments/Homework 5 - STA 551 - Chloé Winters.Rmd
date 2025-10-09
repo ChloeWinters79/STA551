@@ -318,7 +318,6 @@ accuracy <- mean(pred_class == logit_final$y)  # use model's response
 accuracy
 
 
-library(pROC)
 roc_curve <- roc(logit_final$y, pred_probs)
 plot(roc_curve, main = "ROC Curve for Final Logistic Model")
 auc(roc_curve)
