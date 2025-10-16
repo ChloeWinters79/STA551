@@ -1,0 +1,824 @@
+---
+title: "Melbourne Housing Data Regression Modeling and Cross Validation"
+author: "Chloé Winters"
+date: "2025-10-15"
+output:
+  html_document:           # output document format
+    toc: yes               # add table contents
+    toc_float: yes         # toc_property: floating
+    toc_depth: 4           # depth of TOC headings
+    fig_width: 6           # global figure width
+    fig_height: 4          # global figure height
+    fig_caption: yes       # add figure caption
+    number_sections: yes   # numbering section headings
+    toc_collapsed: yes     # TOC subheading clapsing
+    code_folding: hide     # folding/showing code 
+    code_download: yes     # allow to download complete RMarkdown source code
+    smooth_scroll: yes     # scrolling text of the document
+    theme: lumen           # visual theme for HTML document only
+    highlight: tango       # code syntax hightlighting styles
+  pdf_document: 
+    toc: yes
+    toc_depth: 4
+    fig_caption: yes
+    number_sections: yes
+  word_document:
+    toc: yes
+    toc_depth: '4'
+---
+
+```{css, echo = FALSE}
+div#TOC li {     /* table of content  */
+    list-style:upper-roman;
+    background-image:none;
+    background-repeat:none;
+    background-position:0;
+}
+
+h1.title {    /* level 1 header of title  */
+  font-size: 24px;
+  font-weight: bold;
+  color: DarkRed;
+  text-align: center;
+}
+
+h4.author { /* Header 4 - and the author and data headers use this too  */
+  font-size: 18px;
+  font-weight: bold;
+  font-family: "Times New Roman", Times, serif;
+  color: DarkRed;
+  text-align: center;
+}
+
+h4.date { /* Header 4 - and the author and data headers use this too  */
+  font-size: 18px;
+  font-weight: bold;
+  font-family: "Times New Roman", Times, serif;
+  color: DarkBlue;
+  text-align: center;
+}
+
+h1 { /* Header 1 - and the author and data headers use this too  */
+    font-size: 20px;
+    font-weight: bold;
+    font-family: "Times New Roman", Times, serif;
+    color: darkred;
+    text-align: center;
+}
+
+h2 { /* Header 2 - and the author and data headers use this too  */
+    font-size: 18px;
+    font-weight: bold;
+    font-family: "Times New Roman", Times, serif;
+    color: navy;
+    text-align: left;
+}
+
+h3 { /* Header 3 - and the author and data headers use this too  */
+    font-size: 16px;
+    font-weight: bold;
+    font-family: "Times New Roman", Times, serif;
+    color: navy;
+    text-align: left;
+}
+
+h4 { /* Header 4 - and the author and data headers use this too  */
+    font-size: 14px;
+  font-weight: bold;
+    font-family: "Times New Roman", Times, serif;
+    color: darkred;
+    text-align: left;
+}
+
+/* Add dots after numbered headers */
+.header-section-number::after {
+  content: ".";
+}
+```
+
+
+
+
+```{r setup, include=FALSE}
+# code chunk specifies whether the R code, warnings, and output 
+# will be included in the output files.
+library(knitr)
+knitr::opts_chunk$set(echo = TRUE,           # include code chunk in the output file
+                      warnings = FALSE,       # sometimes, you code may produce warning messages,
+                                              # you can choose to include the warning messages in
+                                              # the output file. 
+                      results = TRUE          # you can also decide whether to include the output
+                                              # in the output file.
+                      )   
+
+
+
+library(knitr)
+library(pander)
+library(mlbench)
+library(dplyr)
+library(readr)
+library(stringr)
+library(purrr)
+library(ggcorrplot)
+library(GGally)
+library(ggplot2)
+library(tidyr)
+library(gridExtra)
+library(vcd)
+library(lubridate)
+library(tidyverse)
+library(car)
+library(caret)
+library(MASS)
+library(pscl)
+library(ggplot2)
+library(pROC)
+library(knitr)
+library(pander)
+library(mlbench)
+library(MASS)
+library(pROC)
+
+knitr::opts_chunk$set(echo = TRUE,      
+                      warnings = FALSE,   
+                      messages = FALSE,  
+                      results = TRUE,
+                      comment = NA
+                      )   
+
+```
+
+
+
+# Introduction
+
+This project looks at housing data from Melbourne, specifically houses that were put up on the real estate market and information about these houses including, if and how they sold, the selling price, bedroom and bathroom counts, and other relevant information. In this project that data will undergo necessary EDA and Feature Engineering, then there will be linear and logistic regression modeling. Both the linear and logistic models will undergo cross validation, and be split into training and testing data sets to be properly assessed. Once the final models are determined and assessed we will conduct our formal conclusions. 
+
+# Materials 
+
+Going over the materials for this project first we will address the original data set being used for this assignment. Then that data will undergo some EDA and Feature Engineering to create the final data set. After the final data set is created it will be explained just like it was the original data set. 
+
+## Original Data Set
+
+```{r}
+url ="https://chloewinters79.github.io/STA551/Data/MelbourneHousing.csv"
+house = read.csv(url, header = TRUE)
+```
+
+The data set being used in this analysis consits of 34,857 observations and 21 variables which are described below. This data set was created from publicly available results posted every week from Domain.com.au. There is a mix of numerical and categorical data in this data set. 
+
+1. Suburb: (cat) suburb in which the property is located
+2. Address: (cat) full street address of the property
+3. Rooms: (num) number of rooms in the property
+4. Type: (cat) type of property (e.g., house, unit, townhouse, etc.)
+5. Price: (num) final sale price in Australian dollars
+6. Method: (cat) method of sale (e.g., sold, sold prior, passed in, withdrawn, etc.)
+7. SellerG: (cat) real estate agency responsible for the sale
+8. Date: (cat) date of sale (stored as character; may be converted to date format)
+9. Distance: (num) distance from the property to the Central Business District (CBD) in kilometers (currently stored as character; needs conversion)
+10. Postcode: (cat) postal code of the property location (numeric but stored as character)
+11. Bedroom2: (num) number of bedrooms from an alternate data source
+12. Bathroom: (num) number of bathrooms
+13. Car: (num) number of car parking or garage spaces
+14. Landsize: (num) land area of the property in square meters
+15. BuildingArea: (num) internal building size in square meters
+16. YearBuilt: (num) year the property was constructed
+17. CouncilArea: (cat) local governing council for the property
+18. Lattitude: (num) latitude coordinate of the property location
+19. Longtitude: (num) longitude coordinate of the property location
+20. Regionname: (cat) broader region classification
+21. Propertycount: (num) number of properties in the suburb (currently stored as character; needs conversion)
+
+## EDA and Feature Engineering
+
+Before any of the linear of logistic regression modeling can start it is important for the data set to undergo EDA and Feature Engineering. This not only gives us a better understanding of the data set but it allows for any necessary cleaning and variable transformation to be made now. This will assist later on in the model building process. 
+
+### Missing Values
+
+The first thing to be addressed in this exploratory data analysis is the missing variables. Three variables in this data set, BuildingArea, Landsize and YearBuilt are missing over 30% of their observations. While feature engineering is helpful when dealing with missing observations, it does not make sense to do so when over 30% of the observations are missing. Thus, since the data set contains plenty of other variables to work with, it makes the most sense to remove these three variables moving forward.
+
+Additionally, it makes sense to remove the variable address because we do not have a practical way to use it in our analysis. Additionally, the decision was made to create extra variables that could be practical for analysis, these variables are SaleYear and SaleMonth which were created from extracting information from the Date variable. This will allow for more analysis on time based trends when it comes to the housing data analysis. 
+
+Finally, some variables needed to be recategorized from character variables to numeric, for example the variables Distance and PropertyCount, so they can be utilized properly in future analysis. Any incorrectly categorized variables were re-coded for easier analysis.  
+
+```{r}
+na_summary <- house %>%
+  summarise(across(everything(), ~ sum(is.na(.)) / n() * 100)) %>%
+  gather(key = "Variable", value = "PercentMissing") %>%
+  arrange(desc(PercentMissing))
+
+```
+
+```{r}
+
+na_heavy <- na_summary %>% filter(PercentMissing > 30)
+na_heavy
+
+house <- house %>%
+  mutate(
+    Date = dmy(Date),                      # convert to Date (use mdy() instead if needed)
+    SaleYear = year(Date),                # extract year
+    SaleMonth = month(Date, label = TRUE, abbr = TRUE)  # extract month as Jan/Feb/etc.
+  )
+```
+
+```{r}
+house <- house %>%
+  mutate(
+    Distance = as.numeric(gsub(",", "", trimws(Distance))),
+    Propertycount = as.numeric(gsub(",", "", trimws(Propertycount)))
+  )
+```
+
+### Variable Distribution
+
+Since this data set consists of both numerical and categorical variables to make the analysis clear and easy to understand we are going to break up the analysis of these variables into two different sections. This way the apprporiate types of analysis are conducting for the specific variables. 
+
+#### Analysis of Numerical Variables
+
+Interestingly enough only the variables Longitude and Latitude appear to have a normal distribution. Sale year is a little weirdly laid out because this data only has information from 3 years so it does have enough bars to have a proper distribution. Otherwise, all the other variables appear to have a right sided skewness. Which does make sense because when thinking of houses we wouldnt expect a normal distribution in the number of bathrooms in a house when the range is from 0 to 12, because the average house does not include 6 bathrooms. 
+
+```{r}
+# Histograms of numeric variables (3x3 layout)
+par(mfrow = c(3,3))
+hist(house$Price, main = "Distribution of Price")
+hist(house$Rooms, main = "Distribution of Rooms")
+hist(house$Bedroom2, main = "Distribution of Bedroom2")
+hist(house$Bathroom, main = "Distribution of Bathroom")
+hist(house$Car, main = "Distribution of Car Spaces")
+hist(house$Distance, main = "Distribution of Distance")
+hist(house$Propertycount, main = "Distribution of Property Count")
+hist(house$Lattitude, main = "Distribution of Lattitude")
+hist(house$Longtitude, main = "Distribution of Longitude")
+
+```
+
+
+#### Analysis of Categorical Variables
+
+For the categorical variables we are going to look at tables containing the distribution of each of the categorical options and commenting on that distribution.  
+
+When looking at the Type variable about 68% of the observations are houses, while 21% are units and duplexes, and the remaining 11% are townhouses. This is not an evenly distributed categorical variable, with a the observations skewing heavily towards houses. 
+
+```{r}
+table(house$Type)
+```
+
+For the Method variable, approximately 85% of properties were sold via the standard sale method (“S”), 10% were sold prior (“SP”), and the remaining 5% were either passed in or withdrawn. This distribution is heavily skewed towards the standard sale method.
+
+```{r}
+table(house$Method)
+```
+
+The Regionname variable shows that about 40% of properties are located in the Northern Metropolitan region, 25% in Southern Metropolitan, 20% in Western Metropolitan, and the remaining 15% are spread across Eastern Metropolitan, Bayside, and other regions. The distribution is not even, with the majority of properties concentrated in the northern and southern regions.
+
+```{r}
+table(house$Regionname)
+```
+The CouncilArea variable indicates that several councils have a large number of properties, while some councils have very few listings. The data is heavily skewed toward certain councils like Boroondara, Darebin, and Moreland This variable shows an uneven distribution and may require grouping for modeling.
+
+```{r, include=FALSE}
+table(house$CouncilArea)
+```
+
+The SellerG variable reveals that a few real estate agencies dominate the market. For example, Harcourts, Jellis, and Ray White account for the majority of sales, while the remaining agencies represent a small fraction. The distribution is highly skewed toward these top agencies. It may make sense to rework this variable into a binary variable where it indicates whether or not the home was sold by a large real estate agency. 
+
+
+```{r, include=FALSE}
+table(house$SellerG)
+```
+The Suburb variable shows a similar pattern, with a few suburbs like Reservoir, Bentleigh East, and Glen Waverley containing a large number of listings, while most suburbs have very few. The distribution is highly uneven and will need consideration if used for modeling.
+
+```{r, include=FALSE}
+table(house$Suburb)
+```
+
+
+### Pairwise Relationships
+
+With the size of this data set being over 30,000 observations, a pairwise scatter plot is unfortunately not that clear and legible for analysis, instead it makes for sense to look at correlation using a heat map, which is easier to read with this amount of observations. The only variables with a strong correlation are Rooms and Bedroom2, which makes sense given the context of the two variables. Otherwise, the rest of the variables have weak correlation with each other. It is important to note that while weak, the data does have variables with negative and postiver correlation respectively, the variables do not all follow the same pattern for correlation. 
+
+```{r}
+numeric_vars <- dplyr::select(
+  house,
+  Price, Rooms, Bedroom2, Bathroom, Car, Distance, Propertycount, Lattitude, Longtitude, SaleYear
+)
+# Pearson correlation matrix
+corr_mat_pearson <- cor(numeric_vars, use = "complete.obs", method = "pearson")
+
+# Pearson correlation heatmap
+ggcorrplot(corr_mat_pearson, 
+           hc.order = TRUE,
+           type = "lower",
+           lab = TRUE,
+           lab_size = 3,
+           method = "square",
+           colors = c("blue", "white", "red"),
+           title = "Pearson Correlation Heatmap of Numeric Variables",
+           ggtheme = theme_minimal)
+```
+
+## Feature Engineering
+
+
+After conducting the examination on the data through our exploratory data analysis we were able to make the determination on what kinds feature engineering steps need to be taken. Particularly in concerns to the variable price, which needs to undergo some transformations. It makes the most sense to have the price variable undergo a log transformation so it has a better distribution for our analysis. Additionally, the decision was made to group some of the sparser categories in the categorical variables into a joint larger "other" category since some of the categories were very unequal in size.  
+
+```{r}
+house <- house %>%
+  mutate(
+    LogPrice = log1p(Price),
+  )
+
+rare_councils <- names(sort(table(house$CouncilArea), decreasing = FALSE)[
+  sort(table(house$CouncilArea), decreasing = FALSE) < 100
+])
+house <- house %>%
+  mutate(CouncilAreaGrouped = ifelse(CouncilArea %in% rare_councils, "Other", CouncilArea))
+
+# Suburb: group suburbs with few observations into "Other"
+rare_suburbs <- names(sort(table(house$Suburb), decreasing = FALSE)[
+  sort(table(house$Suburb), decreasing = FALSE) < 50
+])
+house <- house %>%
+  mutate(SuburbGrouped = ifelse(Suburb %in% rare_suburbs, "Other", Suburb))
+
+# 3. Convert SellerG into binary variable: big seller = 1, small seller = 0
+# Define big sellers (top 10 agencies by number of sales)
+top_sellers <- names(sort(table(house$SellerG), decreasing = TRUE)[1:10])
+house <- house %>%
+  mutate(SellerBinary = ifelse(SellerG %in% top_sellers, 1, 0))
+
+house <- house %>%
+  mutate(SoldBinary = ifelse(Method %in% c("S", "SP", "PI"), 1, 0))
+
+
+```
+
+
+```{r}
+# Save cleaned dataset for regression analysis
+write.csv(house, "MelbourneHousing_Cleaned.csv", row.names = FALSE)
+
+```
+
+## Final Data Set
+
+The final data set being used after undergoing EDA and Feature Engineering consists of 34,854 observations and 25 variables which are described below. 
+
+1. Suburb: (cat) suburb where the property is located
+2. Rooms: (num) total number of rooms (including bedrooms and living areas)
+3. Type: (cat) type of dwelling — house (h), unit/apartment (u), or townhouse (t)
+4. Price: (num) sale price of the property in Australian dollars
+5. Method: (cat) method of sale (e.g., sold, sold prior, passed in, withdrawn, etc.)
+6. SellerG: (cat) real estate agency handling the sale
+7. Date: (cat) sale date (in YYYY-MM-DD format)
+8. Distance: (num) distance from the property to the Melbourne Central Business District (CBD) in kilometers
+9. Postcode: (cat) postal code of the property location
+10. Bedroom2: (num) number of bedrooms (from an alternate data source)
+11. Bathroom: (num) number of bathrooms
+12. Car: (num) number of car parking or garage spaces
+13. Landsize: (num) land area of the property in square meters
+14. CouncilArea: (cat) name of the local governing council for the property
+15. Lattitude: (num) latitude coordinate of the property
+16. Longtitude: (num) longitude coordinate of the property
+17. Regionname: (cat) broader region classification of the suburb
+18. Propertycount: (num) total number of properties within the suburb
+19. SaleYear: (num) numeric year of sale extracted from the Date variable
+20. SaleMonth: (cat) month of sale extracted from the Date variable (abbreviated form)
+21. LogPrice: (num) log-transformed sale price used to reduce skewness in Price
+22. CouncilAreaGrouped: (cat) grouped version of council areas to consolidate smaller categories
+23. SuburbGrouped: (cat) grouped version of suburbs for improved model stability
+24. SellerBinary: (num) binary variable for seller type (1 = large/major agency, 0 = small/local agency)
+25. SoldBinary: (num) binary indicator of sale status (1 = sold by any method, 0 = not sold)
+
+```{r}
+url ="https://chloewinters79.github.io/STA551/Data/MelbourneHousing_Cleaned.csv"
+house_cleaned = read.csv(url, header = TRUE)
+
+house_cleaned <- subset(house_cleaned, Regionname != "#N/A")
+
+```
+
+# Methodology
+
+With this data set we are aiming to analyze two specific questions.The linear model will cover what variables help predict the selling price of the house. The logistic model will cover what variables help predict whether or not the house will sell. Three candidate models will be tested for the linear and logistic regression models, a practical, expanded, and stepwise model. The three models linear models will undergo cross validation and a final model will be selected and interpreted in context. The three logistic models will be assessed with a cross fold validation and ROC analysis then the optimal cut-off will be determined for the final model and it will be assessed accordingly. 
+
+## Linear Regression Modeling
+
+In our linear model we are looking to see what variables help predict the selling price of the house. Understanding a likely selling point for a home can be very helpful because it gives the seller realistic expectations and helps with setting a listing price. Especially in scenarios where the seller wants to sell a house fast, putting a house for sale at a price point much higher than the realistic selling price can cause a house to sit on the market for much longer. Understanding what that realistic selling price is for the house is vital for setting the starting price.
+
+### Canidate Models
+
+To start the linear regression the assignment asks for a model to be created using practical variables. Since we are analyzing our practical question regarding price, which we did take the log of in the EDA and Engineering section, we decided to make a model with the following variables, Rooms, Bathroom, Car, and Distance. From the summary output, all the variables have a p-value less than 0.05 and are statistically significant, and the same applies to the overall model. 
+
+```{r}
+# Practical Model
+lm_practical <- lm(LogPrice ~ Rooms + Bathroom + Car + Distance, data = house_cleaned)
+summary(lm_practical)
+```
+For the second model the assignment calls for additional models to be added to the initial practical model to make a more expanded model. In addition to the variables in the first practical model this model includes, SellerBinary, Regionname, and Propertycount. Looking at the summary output for the model there is one variable that does not have a p-value less than 0.05, which is RegionnameNorthern Victoria. However all the other subsets of the Regionname variable have a p-value less than 0.05 indicating statistical significance. The model also has a p-value less than 0.05 and is statistically significant.
+
+
+```{r}
+# Extended Model
+lm_extended <- lm(LogPrice ~ Rooms + Bathroom + Car + Distance + SellerBinary + Regionname + Propertycount, data = house_cleaned)
+summary(lm_extended)
+```
+
+Finally, the assignment asks for a variable selection method to identify the optimal final model. For this data set, stepwise direction will be used to determine the optimal model. The final model turns out to be a replica of the extended model, none of the variables were removed and no new variables were added. 
+
+```{r}
+
+lm_step <- stepAIC(lm_extended, direction = "both", trace = FALSE)
+summary(lm_step)
+
+# View final model formula
+formula(lm_step)
+```
+
+### Cross Validation and Model Selection
+
+Now that all three candidate models have been created they need to undergo cross validation so the final optimal model can be selected and then tested. For this project 75% of the data will be used at the training data while the remaining 25% will be used for testing. These cut offs are due to what the project guidelines call for. 
+
+
+```{r}
+
+## 1. Set up train/test split
+
+set.seed(123)
+n <- nrow(house_cleaned)
+train.n <- round(0.75 * n)
+train.id <- sample(1:n, train.n, replace = FALSE)
+
+train <- house_cleaned[train.id, ]
+test  <- house_cleaned[-train.id, ]
+
+
+
+## 2. Remove rows with missing values
+
+# Practical model variables
+practical_vars <- c("LogPrice", "Rooms", "Bathroom", "Car", "Distance")
+train_practical <- train[complete.cases(train[, practical_vars]), ]
+test_practical  <- test[complete.cases(test[, practical_vars]), ]
+
+# Extended/Stepwise model variables
+extended_vars <- c("LogPrice", "Rooms", "Bathroom", "Car", "Distance",
+                   "SellerBinary", "Regionname", "Propertycount")
+train_extended <- train[complete.cases(train[, extended_vars]), ]
+test_extended  <- test[complete.cases(test[, extended_vars]), ]
+
+
+## 3. Set up cross-validation
+
+train_control <- trainControl(method = "cv", number = 10)
+
+
+## 4. Cross-validation - Practical Model
+
+cv_practical <- train(
+  LogPrice ~ Rooms + Bathroom + Car + Distance,
+  data = train_practical,
+  method = "lm",
+  trControl = train_control
+)
+
+
+## 5. Cross-validation - Extended Model
+
+cv_extended <- train(
+  LogPrice ~ Rooms + Bathroom + Car + Distance + SellerBinary + Regionname + Propertycount,
+  data = train_extended,
+  method = "lm",
+  trControl = train_control
+)
+
+
+## 6. Cross-validation - Stepwise Model
+
+cv_step <- train(
+  formula(lm_step),
+  data = train_extended,  # stepwise model uses same variables as extended
+  method = "lm",
+  trControl = train_control
+)
+
+```
+
+The cross validation RMSE and Rsquared results for the three models are shown below. It should be noted that as addressed earlier the extended and stepwise models are the exact same model so their results should be the same. In this output we are looking for the lowest RSME because that is what indicates the better performance and then we are looking for the higher Rsquared value which indicates stronger predictive power. From the output it looks like the extended/stepwise models have the lower RSME at 0.3416741 compared to the practical models 0.3901020 and a higher Rsquared at 0.5615069	compared to the practical models 0.4284256. This shows us that the extended/stepwise model being the optimal model, for clarity sake since they are the same model we will be refering to the model as the final model moving forward. 	
+
+```{r}
+# Cross Validation Results
+cv_results <- data.frame(
+  Model = c("Practical", "Extended", "Stepwise"),
+  RMSE  = c(cv_practical$results$RMSE,
+            cv_extended$results$RMSE,
+            cv_step$results$RMSE),
+  Rsq   = c(cv_practical$results$Rsquared,
+            cv_extended$results$Rsquared,
+            cv_step$results$Rsquared)
+)
+
+cv_results
+```
+
+Now that we have determined the final model it is time to assess it using the testing data that was set asside earlier. The RSME and Rsquared values for the final model were calculated and are 0.349 for the RMSE and 0.5584 for the Rsquared. These are a tiny bit weaker than our results from the training data set but we do not expect the results to match exactly and they are so close it does not appear to be concering.
+
+```{r}
+
+#Clean test set for final model
+
+final_vars <- c("LogPrice", "Rooms", "Bathroom", "Car", "Distance",
+                "SellerBinary", "Regionname", "Propertycount")
+
+test_clean <- test[complete.cases(test[, final_vars]), ]
+
+
+# Predict on cleaned test set
+
+pred_test <- predict(lm_step, newdata = test_clean)
+
+
+# Calculate RMSE and R-squared
+
+rmse_test <- sqrt(mean((pred_test - test_clean$LogPrice)^2))
+rsq_test  <- 1 - sum((pred_test - test_clean$LogPrice)^2) / 
+                  sum((mean(train$LogPrice, na.rm = TRUE) - test_clean$LogPrice)^2)
+
+
+
+# Output
+
+cat("Linear Regression - Final Stepwise Model Performance on Test Set\n")
+cat("RMSE:", round(rmse_test, 4), "\n")
+cat("R-squared:", round(rsq_test, 4), "\n")
+
+```
+
+### Results and Conclusions
+
+The final linear regression model demonstrates that Rooms, Bathroom, Car, Distance, SellerBinary, Regionname, and Propertycount are important predictors of the log-transformed selling price. The model performs well both in cross-validation and on the held-out test set, with strong predictive accuracy and explanatory power. These results provide a useful tool for estimating realistic house prices and can assist sellers in setting competitive listing prices.
+
+The final stepwise linear regression model was developed to predict the log-transformed selling price (LogPrice) of houses based on several predictors, including structural features, location, seller type, and local property density. The model demonstrates strong explanatory power, with a Multiple R-squared of 0.5604. This indicates that approximately 56% of the variation in log prices is explained by the variables in the model. The Residual Standard Error of 0.3435 suggests that predictions are generally close to observed values.
+
+Structural features of the property significantly influence house prices. Specifically, the number of rooms, bathrooms, and car spaces all have positive and statistically significant effects. Each additional room increases the log price by approximately 0.288, while an extra bathroom or car space increases it by 0.065 and 0.046, respectively. These results indicate that larger homes with more amenities command higher prices, which is to be expected. 
+
+The location of the house also plays a critical role in determining house prices. Distance from a central reference point negatively affects price, with an estimated decrease of 0.036 in log price per additional unit of distance. Regional effects are pronounced: properties in Eastern Victoria and the South-Eastern Metropolitan region are associated with higher prices, whereas homes in Western Metropolitan and Western Victoria are associated with lower prices. Notably, Northern Victoria does not show a statistically significant effect.
+
+Additional variables such as seller type and local property density have smaller but meaningful impacts. Houses sold by larger sellers tend to be slightly higher in price, while an increase in the number of nearby properties is associated with a very small reduction in price, reflecting minor local supply effects.
+
+Overall, this model provides a framework for predicting house prices, highlighting the importance of structural characteristics, location, and market context. These results offer  insights for sellers in setting realistic listing prices and for buyers in understanding how specific features and locations influence housing value.
+
+## Logistic Regression Modeling
+
+In our logistic model we are looking to see what variables help predict whether or not a house will sell. Understanding the likelihood of a house selling is very important because if some of the significant predictor variables are things that can be manipulated like price or structural features the seller can change these things. This way the seller can make all the necessary adjustments before bringing a house to market to give it the best chance of selling. 
+
+### Canidate Models
+
+Now moving onto the logistic modeling, this will look at the models for our second practical question which looks at whether or not a house sold. Starting again with the practical model it contains the following variables, LogPrice, Rooms, and Distance. Looking at the output summary, the variable LogPrice has a p-value larger than 0.05 and would not be considered statistically significant, while the variables Rooms and Distance do have p-values smaller than 0.05 and are statistically significant.
+
+```{r}
+# Practical Model
+logit_practical <- glm(SoldBinary ~ LogPrice + Rooms + Distance,
+                       data = house_cleaned, family = binomial)
+summary(logit_practical)
+```
+
+Moving onto the the extended model the variables from the practical model are still being used, with the addition of SellerBinary, Regionname, Car and Bathroom. In this model three of the different Regionname sub variables have a p-value greater than 0.05 and are not statistically significant. Additionally, the variable SellerBinary has a p-value greater than 0.05 and is not statistically significant. All other variables have a p-value smaller than 0.05 and are statistically significant. 
+
+
+```{r}
+## Extended Model
+logit_extended <- glm(SoldBinary ~ LogPrice + Rooms + Distance + SellerBinary +
+                        Regionname + Car + Bathroom, 
+                      data = house_cleaned, family = binomial)
+summary(logit_extended)
+
+```
+
+Finally, the assignment asks for a variable selection method to identify the optimal final model. For this data set, stepwise analysis will be used to determine the optimal model. From the output we know the formula being used for the final model has the variables LogPrice, Rooms, Distance,  Regionname, Car, and Bathroom. Similar to the extended model, some of the sub categories of the Regionname variable have a p-value larger than 0.05 and are not statistically significant, however the rest of the variables do have a p-value less than 0.05 and are statistically significant. 
+
+```{r}
+
+# Final Model
+
+logit_final <- stepAIC(logit_extended, direction = "both", trace = FALSE)
+summary(logit_final)
+
+# View final model formula
+formula(logit_final)
+
+```
+
+### Model Selection
+
+Now that the three candidate logistic regression models have been created they need to undergo the model selection process. Similar to the linear regression process, 75% of the data will be used for training and the remaining 25% will be used as the testing data. We are going to do a cross fold validation process on the models and look at an ROC curve to determine the best canidate model.  
+
+```{r}
+
+house_cleaned <- house_cleaned %>%
+  dplyr::mutate(
+    Regionname = na_if(Regionname, "#N/A")  # convert "#N/A" to actual NA
+  ) %>%
+  tidyr::drop_na(SoldBinary, LogPrice, Rooms, Distance,
+                 SellerBinary, Regionname, Car, Bathroom)
+```
+
+Starting with the average predictive error calculations the three models have quite similar results, with the practical model being 0.1010451, and the stepwise and extended models both being 0.101241. In this case we want the smallest predictive error which would be the practical model. However, before making a final model selection we are also going to asses the ROC curve and AUC values.
+
+```{r}
+
+house_cleaned$Regionname <- factor(house_cleaned$Regionname)
+house_cleaned$Regionname <- droplevels(house_cleaned$Regionname)
+
+set.seed(123)
+
+n <- nrow(house_cleaned)
+train.n <- round(0.75 * n)
+train.id <- sample(1:n, train.n, replace = FALSE)
+train <- house_cleaned[train.id, ]
+test  <- house_cleaned[-train.id, ]
+
+
+k <- 10
+fold.size <- floor(nrow(train) / k)
+PE1 <- rep(0, k)
+PE2 <- rep(0, k)
+PE3 <- rep(0, k)
+
+for(i in 1:k) {
+  valid.id <- (fold.size * (i - 1) + 1):(fold.size * i)
+  valid <- train[valid.id, ]
+  train.dat <- train[-valid.id, ]
+
+  train.dat$Regionname <- factor(train.dat$Regionname)
+  train.dat$Regionname <- droplevels(train.dat$Regionname)
+  
+  valid$Regionname <- factor(valid$Regionname, levels = levels(train.dat$Regionname))
+  
+  # Practical Model
+  candidate01 <- glm(
+    SoldBinary ~ LogPrice + Rooms + Distance,
+    family = binomial(link = "logit"),
+    data = train.dat
+  )
+  
+  # Expanded Model
+  candidate03 <- glm(
+    SoldBinary ~ LogPrice + Rooms + Distance + SellerBinary +
+      Regionname + Car + Bathroom,
+    family = binomial(link = "logit"),
+    data = train.dat
+  )
+  
+  # Stepwise Model
+  candidate02 <- stepAIC(candidate03, direction = "both", trace = FALSE)
+  
+  # Predictions
+  pred01 <- predict(candidate01, newdata = valid, type = "response")
+  pred02 <- predict(candidate02, newdata = valid, type = "response")
+  pred03 <- predict(candidate03, newdata = valid, type = "response")
+  
+  # Convert to 0/1
+  pre.outcome01 <- ifelse(pred01 > 0.5, 1, 0)
+  pre.outcome02 <- ifelse(pred02 > 0.5, 1, 0)
+  pre.outcome03 <- ifelse(pred03 > 0.5, 1, 0)
+  
+  # Error rates
+  PE1[i] <- mean(pre.outcome01 != valid$SoldBinary)
+  PE2[i] <- mean(pre.outcome02 != valid$SoldBinary)
+  PE3[i] <- mean(pre.outcome03 != valid$SoldBinary)
+}
+
+# Results
+avg.pe <- cbind(
+  PE1 = mean(PE1),
+  PE2 = mean(PE2),
+  PE3 = mean(PE3)
+)
+
+kable(avg.pe, caption = "Average of prediction errors of candidate models")
+
+```
+Looking at the ROC curve we see something slightly different than our PE analysis, in this case we are seeing the expanded and the stepwise models with the better ROC and AUC and the practical model is not as strong. In this case our expanded model appears slightly better than the stepwise model. However, the difference is very slight and the expanded model is more complex. 
+
+Considering the PEs were all very similar but the ROC and AUC show a strong argument for stepwise or extended over the practical model, it makes sense to remove the practical model from the final model consideration. Looking at the stepwise and extended models since they are extremely similar in their ROC and AUC outputs and have identical PEs it makes sense to use the simpler model as the final model. In this case that would be the stepwise model so we will be using that as our final model going forward. 
+
+
+```{r}
+library(pROC)
+
+# Predicted probabilities on TRAIN set
+pred01 <- predict(candidate01, newdata = train, type = "response")
+pred02 <- predict(candidate02, newdata = train, type = "response")
+pred03 <- predict(candidate03, newdata = train, type = "response")
+
+category <- train$SoldBinary
+
+# Create ROC objects
+ROCobj01 <- roc(category, pred01)
+ROCobj02 <- roc(category, pred02)
+ROCobj03 <- roc(category, pred03)
+
+# Plot ROC curves
+plot(ROCobj01, col = 2, lty = 1,
+     xlab = "FPR: 1 - Specificity",
+     ylab = "TPR: Sensitivity",
+     main = "ROC curves of the three candidate models")
+
+plot(ROCobj02, col = 3, lty = 2, add = TRUE)
+plot(ROCobj03, col = 4, lty = 3, add = TRUE)
+
+# AUC values
+AUC01 <- round(auc(ROCobj01), 4)
+AUC02 <- round(auc(ROCobj02), 4)
+AUC03 <- round(auc(ROCobj03), 4)
+
+legend("bottomright",
+       legend = c(paste("Practical model: AUC =", AUC01),
+                  paste("Stepwise model: AUC =", AUC02),
+                  paste("Expanded model: AUC =", AUC03)),
+       col = 2:4,
+       lty = 1:3,
+       cex = 0.8,
+       bty = "n")
+
+
+```
+
+
+### Optimal Cut-Off 
+
+Now that a final model is selected we need to determine the optimal cutoff point. This will be calculated by testing several different thresholds on the final model and with the training data set. The optimal threshold will be output and be used for our analysis. Based on the output below, it appears the best threshold for this model is 0.1. 
+
+```{r}
+# Get predicted probabilities on the TRAIN set
+predicted_probabilities <- predict(candidate02, newdata = train, type = "response")
+actual <- train$SoldBinary
+
+thresholds <- seq(0.1, 0.9, by = 0.01)
+accuracies <- sapply(thresholds, function(th) {
+  pred_class <- ifelse(predicted_probabilities > th, 1, 0)
+  mean(pred_class == actual)
+})
+
+best_thresh <- thresholds[which.max(accuracies)]
+best_thresh
+
+```
+
+With an optimal threshold determined, it can be used to determine the accuracy of the model. Now using the 25% testing data set that was set aside earlier the accuracy of the model can be calculated. The final model has an accuracy of 0.8893459 which is very strong. 
+
+```{r}
+pred02 <- predict(candidate02, newdata = test, type = "response")
+pred02.outcome <- ifelse(pred02 > best_thresh, 1, 0)
+
+accuracy <- mean(pred02.outcome == test$SoldBinary)
+
+kable(data.frame(
+  Cutoff = best_thresh,
+  Accuracy = accuracy
+), caption = "Final Model Accuracy Using Optimal Cutoff")
+
+```
+
+### Results and Conclusions
+
+
+The stepwise logistic regression model provides a reliable tool for predicting house sales. Sellers can use this model to understand which factors are most likely to influence a sale and adjust pricing or property features accordingly, increasing the chances of a successful and timely transaction.
+
+The final stepwise logistic regression model was developed to predict the probability that a house will sell (SoldBinary = 1) based on several predictors, including structural features, price, and location. This model allows us to assess which factors significantly influence the likelihood of a sale, providing actionable insights for sellers who may want to adjust price, amenities, or target marketing based on location.
+
+Several structural characteristics are significant predictors. The number of rooms has a negative effect on the probability of selling, indicating that larger homes with more rooms may appeal to a narrower pool of buyers. Additional bathrooms also decrease the likelihood of a sale, while the number of car spaces has a small negative effect. Interestingly, higher log-transformed prices (LogPrice) increase the probability of selling, suggesting that, within this market, more expensive homes tend to sell at a slightly higher rate, potentially reflecting quality or desirable locations.
+
+Location plays a crucial role in sales probability. Compared to the reference region, homes in Eastern Victoria are significantly less likely to sell, whereas properties in Northern Metropolitan and Western Metropolitan regions are significantly more likely to sell. Other regions vary in significance, with some sub-regions showing no statistically meaningful effect, indicating that the influence of location depends on the specific area.
+
+Overall, the model demonstrates that both structural features and geographic location meaningfully affect whether a house sells. By understanding these relationships, sellers can make strategic adjustments—such as pricing, layout improvements, or targeted marketing—to improve the likelihood of a successful sale. The final model provides a practical framework for predicting house sales, helping guide data-driven decisions in the housing market.
+
+# Summary and Discussion
+
+This project analyzed Melbourne housing data to understand what factors influence house selling prices and the likelihood of a house selling. Using a cleaned dataset of 34,854 properties, both linear and logistic regression models were developed, validated through cross-validation and test sets, and optimized via stepwise selection.
+
+The final linear regression model found that structural features such as rooms, bathrooms, car spaces, and location such as region and distance from the CBD, seller type, and local property density significantly predict log-transformed house prices. The model explains approximately 56% of price variation, providing sellers and buyers with actionable guidance for realistic pricing and value assessment.
+
+The final logistic regression model identified key predictors of sale probability, including price, structural features, and region. Higher-priced homes and those in Northern or Western Metropolitan areas were more likely to sell, while larger homes with many rooms or bathrooms sold slightly less readily. The model achieved an accuracy of 89%, offering sellers insight into factors that can improve the likelihood of a successful sale.
+
+Strengths of the analysis include the data preparation, cross-validation, and models that provide actionable insights. However, some limitations include missing data for some variables, skewed categorical distributions, and the absence of other market factors such as property condition or buyer demand. Future improvements could include incorporating additional features, using other modeling techniques, and analyzing market trends.
+
+Overall, the analysis provides a framework for predicting both house selling prices and sale likelihood, helping sellers make data-driven decisions to optimize pricing, property features, and marketing strategies in the Melbourne housing market.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
