@@ -1,0 +1,424 @@
+---
+title: "Logistic and Perceptron Modeling on Customer Churn Data"
+author: "Chloé Winters"
+date: "2025-10-23"
+output:
+  html_document:           # output document format
+    toc: yes               # add table contents
+    toc_float: yes         # toc_property: floating
+    toc_depth: 4           # depth of TOC headings
+    fig_width: 6           # global figure width
+    fig_height: 4          # global figure height
+    fig_caption: yes       # add figure caption
+    number_sections: yes   # numbering section headings
+    toc_collapsed: yes     # TOC subheading clapsing
+    code_folding: hide     # folding/showing code 
+    code_download: yes     # allow to download complete RMarkdown source code
+    smooth_scroll: yes     # scrolling text of the document
+    theme: lumen           # visual theme for HTML document only
+    highlight: tango       # code syntax hightlighting styles
+  pdf_document: 
+    toc: yes
+    toc_depth: 4
+    fig_caption: yes
+    number_sections: yes
+  word_document:
+    toc: yes
+    toc_depth: '4'
+---
+
+```{css, echo = FALSE}
+div#TOC li {     /* table of content  */
+    list-style:upper-roman;
+    background-image:none;
+    background-repeat:none;
+    background-position:0;
+}
+
+h1.title {    /* level 1 header of title  */
+  font-size: 24px;
+  font-weight: bold;
+  color: DarkRed;
+  text-align: center;
+}
+
+h4.author { /* Header 4 - and the author and data headers use this too  */
+  font-size: 18px;
+  font-weight: bold;
+  font-family: "Times New Roman", Times, serif;
+  color: DarkRed;
+  text-align: center;
+}
+
+h4.date { /* Header 4 - and the author and data headers use this too  */
+  font-size: 18px;
+  font-weight: bold;
+  font-family: "Times New Roman", Times, serif;
+  color: DarkBlue;
+  text-align: center;
+}
+
+h1 { /* Header 1 - and the author and data headers use this too  */
+    font-size: 20px;
+    font-weight: bold;
+    font-family: "Times New Roman", Times, serif;
+    color: darkred;
+    text-align: center;
+}
+
+h2 { /* Header 2 - and the author and data headers use this too  */
+    font-size: 18px;
+    font-weight: bold;
+    font-family: "Times New Roman", Times, serif;
+    color: navy;
+    text-align: left;
+}
+
+h3 { /* Header 3 - and the author and data headers use this too  */
+    font-size: 16px;
+    font-weight: bold;
+    font-family: "Times New Roman", Times, serif;
+    color: navy;
+    text-align: left;
+}
+
+h4 { /* Header 4 - and the author and data headers use this too  */
+    font-size: 14px;
+  font-weight: bold;
+    font-family: "Times New Roman", Times, serif;
+    color: darkred;
+    text-align: left;
+}
+
+/* Add dots after numbered headers */
+.header-section-number::after {
+  content: ".";
+}
+```
+
+
+
+
+```{r setup, include=FALSE}
+# code chunk specifies whether the R code, warnings, and output 
+# will be included in the output files.
+library(knitr)
+knitr::opts_chunk$set(echo = TRUE,           # include code chunk in the output file
+                      warnings = FALSE,       # sometimes, you code may produce warning messages,
+                                              # you can choose to include the warning messages in
+                                              # the output file. 
+                      results = TRUE          # you can also decide whether to include the output
+                                              # in the output file.
+                      )   
+
+
+
+library(car)
+library(caret)
+library(corrplot)
+library(ggcorrplot)
+library(GGally)
+library(ggplot2)
+library(gridExtra)
+library(knitr)
+library(lubridate)
+library(MASS)
+library(mlbench)
+library(pander)
+library(pROC)
+library(tidyverse)
+library(vcd)
+library(reshape2)
+library(neuralnet)
+library(gridExtra)
+
+
+knitr::opts_chunk$set(echo = TRUE,      
+                      warnings = FALSE,   
+                      messages = FALSE,  
+                      results = TRUE,
+                      comment = NA
+                      )   
+
+```
+
+# Introduction 
+
+This assingment will be investigating a companies customer retentian through implementing and comparing different learning models, specifically logistic and perceptron models. We will investigate how different variables may or may not impact the likelihood of customer retentian at this company. 
+
+
+# Materials 
+
+## Data Set
+
+This data set is a small portion of a telecommunication companies customer data. The data set was created to investigate service quality and improve customer retaintion. There are 1,000 observations in the data set and 14 variables which are described below. 
+
+```{r}
+url ="https://pengdsci.github.io/datasets/ChurnData/Customer-Chrn-dataset.txt"
+churn = read.csv(url, header = TRUE)
+```
+
+1. Sex: (cat) customer’s gender
+2. Marital_Status: (cat) marital status of the customer
+3. Term: (num) duration of the customer’s term in months
+4. Phone_service: (cat) indicates whether the customer has phone service (Yes = has phone service; No = does not have phone service)
+5. International_plan: (cat) indicates whether the customer has an international calling plan (Yes = has international plan; No = does not have international plan)
+6. Voice_mail_plan: (cat) indicates whether the customer has a voice mail plan (Yes = has voice mail plan; No = does not have voice mail plan)
+7. Multiple_line: (cat) indicates whether the customer has multiple phone lines (Yes = has multiple lines; No = does not have multiple lines; No phone = does not have phone service)
+8. Internet_service: (cat) type of internet service the customer has (Cable, Fibre optic, DSL, or No internet)
+9. Technical_support: (cat) indicates whether the customer has technical support (Yes = has technical support; No = does not have technical support; No internet = does not have internet service)
+10. Streaming_Videos: (cat) indicates whether the customer has streaming video service (Yes = has streaming service; No = does not have streaming service; No internet = does not have internet service)
+11. Agreement_period: (cat) type of contract agreement (Monthly, One year, or Two year contract)
+12. Monthly_Charges: (num) monthly service charges billed to the customer
+13. Total_Charges: (num) total charges incurred by the customer over their service term
+14. Churn: (cat) indicates customer churn status (Yes = customer churned; No = customer retained)
+
+## EDA
+
+Now that we are familiar with our starting data set we need to go through EDA and data cleaning so the final working data set meets the requirements of the assignment. 
+
+
+First we start by checking for missing values, as shown in the output none of the variables have any missing observations which means we do not need to do any imputation or removing of observations for too many missing values. 
+
+```{r}
+# Check for Missing Values
+colSums(is.na(churn))
+```
+
+The next step is to make sure all the variables are properly categorized for our analysis, so the approportiate variables are being converted to factor variables to make for an easier analysis of these variables when we go into our model building. 
+
+
+```{r}
+# Convert Appropriate Variables to Factors
+cat_vars <- c("Sex", "Marital_Status", "Phone_service", "International_plan",
+              "Voice_mail_plan", "Multiple_line", "Internet_service",
+              "Technical_support", "Streaming_Videos", "Agreement_period", "Churn")
+
+churn[cat_vars] <- lapply(churn[cat_vars], factor)
+
+
+```
+
+Now moving into observing the summary statistics this output is actually very important, becasue the original output showed that the International plan variable had "yes" and "Yes" observations which were being split so we were able to write code that combined these two types of observations since they are the same.
+
+
+Looking at the rest of the summary statistics, Term, Monthly_Charges, and Total_Charges all appear to be right-skewed, indicating that most customers have shorter service terms, lower monthly bills, and lower total charges, with a smaller number of customers showing much higher values. This non-normality  could affect models like logistic regression and perceptron, which are sensitive to scale and distribution. Applying standardization or log transformation (particularly for Total_Charges) could help stabilize variance and improve model performance. The categorical variables look well-balanced overall, though the Churn variable shows a moderate imbalance (about 26% churned), which should be monitored to ensure fair model evaluation. Overall, most variables are suitable for modeling after basic preprocessing and scaling.
+
+
+```{r}
+# Summary Statistics 
+# For categorical variables
+for (v in cat_vars) {
+  print(v)
+  print(table(churn[[v]]))
+}
+
+# For numerical variables
+num_vars <- c("Term", "Monthly_Charges", "Total_Charges")
+summary(churn[num_vars])
+
+
+# Fix International
+churn$International_plan <- ifelse(tolower(churn$International_plan) == "yes", "Yes",
+                            ifelse(tolower(churn$International_plan) == "no", "No",
+                                   churn$International_plan))
+
+churn$International_plan <- factor(churn$International_plan)
+```
+
+Looking at our binary variable churn, we see a skew towards No, which means a majority of customers are not churning which is ideal for the company. Considering the size of the data set we are working with the lower amount of yes for churns is not concering because despite being almost a 3:1 ratio of no to yes we still have plenty of data to work with and we should not be concerened with this impacting our analysis. 
+
+```{r}
+# Explore Target Variable (Churn) 
+prop.table(table(churn$Churn))
+ggplot(churn, aes(x = Churn, fill = Churn)) +
+  geom_bar() +
+  labs(title = "Distribution of Customer Churn") +
+  theme_minimal()
+```
+
+Looking at the relationship between our feature variables and the churn is very interesting for the most part with categorical variables the yes and no for churn match pretty well, there doesn't seem to be any difference between the different factor levels. The only time this is not true is typically when we have factor levels that contain a "no internet option" these levels have much lower yes observations compared to their other factors. Additionally in the Agreement Period variable we see less churn the longer the agreement is for. Looking at the numerical variables is where we see some change. We see that customers who do churn have less terms and higher monthly charges compared to those who don't churn, however the total charges for churners vs non churners is not too different comparatively. 
+
+```{r}
+# Explore Relationships Between Features and Churn
+
+# Numeric vs Target
+churn %>%
+  dplyr::select(all_of(num_vars), Churn) %>%
+  pivot_longer(cols = all_of(num_vars), names_to = "Variable", values_to = "Value") %>%
+  ggplot(aes(x = Churn, y = Value, fill = Churn)) +
+  geom_boxplot(outlier.color = "red") +
+  facet_wrap(~Variable, scales = "free") +
+  labs(title = "Numeric Feature Distributions by Churn Status") +
+  theme_minimal()
+
+```
+
+```{r}
+
+# Select categorical variables excluding Churn
+cat_vars_plot <- cat_vars[-length(cat_vars)]
+
+# Set up 3x3 grid
+par(mfrow = c(2, 3), mar = c(5, 4, 2, 1))
+
+for (v in cat_vars_plot) {
+  counts <- table(churn[[v]], churn$Churn)
+  prop <- prop.table(counts, 1)  # row proportions
+  barplot(t(prop), col = c("blue", "red"), beside = TRUE,
+          main = v, ylab = "Proportion", legend.text = TRUE)
+}
+
+# Reset layout
+par(mfrow = c(1, 1))
+
+```
+
+Looking at the correlation between the numerical variables there seems to be high correlation between term and total charges, and moderate correaltion between total charges and monthly charges. These do make sense in the context of the data since the longer a customer is with the company the more terms they will have and thus the more they will have paid overall. So this correlation while high does make sense contextually and does not appear to me a major cause for concern at this moment just something to keep in mind. 
+
+
+```{r}
+
+num_data <- churn %>%
+  select(all_of(num_vars)) %>%
+  drop_na()
+
+
+# Compute correlation matrix
+cor_mat <- cor(num_data)
+
+# Melt correlation matrix for ggplot
+cor_melt <- melt(cor_mat)
+
+# Heatmap
+ggplot(cor_melt, aes(x = Var1, y = Var2, fill = value)) +
+  geom_tile(color = "white") +
+  scale_fill_gradient2(low = "blue", high = "red", mid = "white",
+                       midpoint = 0, limit = c(-1,1), space = "Lab",
+                       name="Correlation") +
+  geom_text(aes(label = round(value, 2)), color = "black", size = 4) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
+  labs(title = "Correlation Heatmap of Numeric Variables", x = "", y = "")
+```
+Now that all the exploratory data analysis has been conducted and there does not appear to be anything drastically concerning that needs to undergo specific transformations in this moment we can move onto our analysis and starting with our question. 
+
+# Methodolgy and Analysis
+
+In this assignment we are going to be looking into which variables help predict the likelihood of a customer churning. This assignment will cover two different types of models, logistic and perceptron modeling, additional analysis will be conducting in the following assignments. 
+
+## Logistic Models
+
+First we are going to start by building our logistic models, we are going to build three models and next week when we have all our models we are going to do some ROC analysis to pick the best models. For the three models we are going to do a full, reduced, and stepwise model and give a brief interpretation of them.
+
+Starting with the full model, we also split the data set into our training and testing data to be utilized later. The full model included all the predictor variables available in the data set. Among these, Term, Internet_serviceNo Internet, Agreement_periodOne year contract, Agreement_periodTwo year contract, and Total_Charges were statistically significant, indicating that shorter customer terms, lack of internet service, shorter agreement periods, and higher total charges increased the likelihood of churn. Other variables, including gender, marital status, and phone/streaming plans, were not significant, suggesting they have little independent effect on churn after accounting for other factors. There were some factor levels with NAs because of multicollinearity however, keeping them in the model does not harm the model, it just means those factor levels can not be interpreted in context in a final model.  
+
+```{r}
+# Split data into training and testing
+set.seed(123)
+train_index <- sample(1:nrow(churn), 0.7 * nrow(churn))
+train_data <- churn[train_index, ]
+test_data <- churn[-train_index, ]
+
+# Full logistic model including all variables
+fullModel <- glm(Churn ~ Sex + Marital_Status + Term + Phone_service + International_plan + 
+                   Voice_mail_plan + Multiple_line + Internet_service + Technical_support + 
+                   Streaming_Videos + Agreement_period + Monthly_Charges + Total_Charges,
+                 data = train_data, family = binomial)
+
+summary(fullModel)
+
+
+```
+
+Next we look at our reduced model, which kept Term, Internet_service, Agreement_period, and Total_Charges as predictors. In this model significant predictors included Term, Internet_serviceNo Internet, Agreement_periodOne year contract, Agreement_periodTwo year contract, and Total_Charges. This model indicates that customers with shorter terms, no internet service, shorter agreement periods, and higher total charges are more likely to churn. Internet_serviceDSL showed marginal significance, while other levels of internet service were not significant.
+
+```{r}
+# Reduced logistic model
+reducedModel <- glm(Churn ~ Term + Internet_service + Agreement_period + Total_Charges,
+                    data = train_data, family = binomial)
+summary(reducedModel)
+
+```
+
+Finally, we have our stepwise model, this model included Term, Technical_support, Agreement_period, Monthly_Charges, and Total_Charges. Significant predictors were Term, Technical_supportNo internet, Agreement_periodOne year contract, Agreement_periodTwo year contract, and Total_Charges. Somewhat significant predictors included Technical_supportYes and Monthly_Charges. The model suggests that shorter terms, lack of technical support, shorter agreement periods, and higher total charges increase the likelihood of churn, while other variables have little effect.
+
+```{r}
+# Stepwise logistic model (both directions)
+stepModel <- stepAIC(fullModel, direction = "both", trace = FALSE)
+summary(stepModel)
+
+```
+
+In next weeks assignment we will compare all these models to assess their predictive power and determine which one is the strongest and should be used as the final model. 
+
+## Peceptron Models
+
+Moving onto our peceptron model we will be looking at two models since peceptron does not have the natural ability to do a stepwise regression process like a logistic regression model would. Thus, for this analysis there will be a full and reduced model created. Before that happens though, the numeric variables need to undergo some scaling so they can be utilized properly in the peceptron models. 
+
+```{r}
+# Scale numeric variables
+churn_nn <- churn %>%
+  mutate(
+    Term_scale = (Term - min(Term)) / (max(Term) - min(Term)),
+    Monthly_Charges_scale = (Monthly_Charges - min(Monthly_Charges)) / 
+                            (max(Monthly_Charges) - min(Monthly_Charges)),
+    Total_Charges_scale = (Total_Charges - min(Total_Charges)) / 
+                          (max(Total_Charges) - min(Total_Charges))
+  )
+
+# Drop original numeric columns
+churn_nn <- churn_nn[, !(names(churn_nn) %in% c("Term", "Monthly_Charges", "Total_Charges"))]
+
+# Convert Churn to numeric
+churn_nn$Churn_num <- ifelse(churn_nn$Churn == "Yes", 1, 0)
+
+# Convert categorical variables to dummy variables
+cat_vars <- setdiff(colnames(churn_nn), c("Term_scale", "Monthly_Charges_scale", "Total_Charges_scale", "Churn", "Churn_num"))
+
+churn_nn_dummy <- churn_nn %>%
+  mutate(across(all_of(cat_vars), as.factor)) %>%
+  model.matrix(~ . - 1, data = .) %>%
+  as.data.frame()
+
+# Clean column names
+colnames(churn_nn_dummy) <- make.names(colnames(churn_nn_dummy))
+
+# Add numeric target back
+churn_nn_dummy$Churn_num <- churn_nn$Churn_num
+```
+
+After the necessary conversions and cleaning we can build and comment on our full model. The full model includes all predictors: sex, marital status, term, phone service, international plan, voice mail plan, multiple line status, internet service type, technical support, streaming videos, agreement period, monthly charges, and total charges. All numeric variables were scaled and categorical variables were converted to dummy variables. In this model, the weights indicate that streaming videos (No internet), monthly charges, and sex (Female) have relatively large positive influences on the hidden layer, while the connection from the hidden layer to the output shows a strong negative weight, reflecting the non-linear mapping learned for churn prediction. Overall, the model captures relationships across all features, although the influence of each feature varies.
+
+```{r}
+# Full Model
+
+NN_vars_full <- setdiff(colnames(churn_nn_dummy), "Churn_num")
+nn_formula_full <- as.formula(paste("Churn_num ~", paste(NN_vars_full, collapse = "+")))
+
+NN_full <- neuralnet(nn_formula_full, data = churn_nn_dummy, hidden = 1,
+                     act.fct = "logistic", linear.output = FALSE)
+
+NN_full$result.matrix
+
+```
+
+The reduced model includes the most important predictors identified from prior logistic modeling: term, total charges, and agreement period (one-year and two-year contracts). In this simplified network, the hidden layer weights indicate strong positive and negative influences for term and total charges, with agreement period showing moderate positive influence. The weight from the hidden layer to the output is strongly negative, emphasizing the impact of these core predictors on churn probability. This reduced model highlights the most critical factors for churn while simplifying the network structure, making it easier to interpret compared to the full model.
+
+```{r}
+
+# Reduced Model
+NN_vars_reduced <- c("Term_scale", "Total_Charges_scale", "Agreement_periodOne.year.contract", "Agreement_periodTwo.year.contract")
+nn_formula_reduced <- as.formula(paste("Churn_num ~", paste(NN_vars_reduced, collapse = "+")))
+
+NN_reduced <- neuralnet(nn_formula_reduced, data = churn_nn_dummy, hidden = 1,
+                        act.fct = "logistic", linear.output = FALSE)
+
+NN_reduced$result.matrix
+```
+In the next assignment we will conduct further analysis on these two models and see which one is the stronger model to move forward with our analysis.
+
+
+# Results and General Discussion
+
+Currently there are 5 decent models that could be used to predict the churn rate of customers at this telecommunications company. While next weeks analysis is what will lead us to our final models, current assumptions is that we will move forward with the stepwise logistic regression model and the reduced peceptron model. Typically we want the simplest model with the most significant variables, which tends to weaken the use of full models. However, the analysis next week could disagree with our assumption so we will go into it with an open mind. The more interesting part of the analysis will be comparing the final models to each other and seeing how they match up in terms of predictive power. 
