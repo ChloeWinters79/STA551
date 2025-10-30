@@ -1,0 +1,639 @@
+---
+title: "Decision Tree and Model Selection for Customer Churn"
+author: "Chloé Winters"
+date: "2025-10-30"
+output:
+  html_document:           # output document format
+    toc: yes               # add table contents
+    toc_float: yes         # toc_property: floating
+    toc_depth: 4           # depth of TOC headings
+    fig_width: 6           # global figure width
+    fig_height: 4          # global figure height
+    fig_caption: yes       # add figure caption
+    number_sections: yes   # numbering section headings
+    toc_collapsed: yes     # TOC subheading clapsing
+    code_folding: hide     # folding/showing code 
+    code_download: yes     # allow to download complete RMarkdown source code
+    smooth_scroll: yes     # scrolling text of the document
+    theme: lumen           # visual theme for HTML document only
+    highlight: tango       # code syntax hightlighting styles
+  pdf_document: 
+    toc: yes
+    toc_depth: 4
+    fig_caption: yes
+    number_sections: yes
+  word_document:
+    toc: yes
+    toc_depth: '4'
+---
+
+```{css, echo = FALSE}
+div#TOC li {     /* table of content  */
+    list-style:upper-roman;
+    background-image:none;
+    background-repeat:none;
+    background-position:0;
+}
+
+h1.title {    /* level 1 header of title  */
+  font-size: 24px;
+  font-weight: bold;
+  color: DarkRed;
+  text-align: center;
+}
+
+h4.author { /* Header 4 - and the author and data headers use this too  */
+  font-size: 18px;
+  font-weight: bold;
+  font-family: "Times New Roman", Times, serif;
+  color: DarkRed;
+  text-align: center;
+}
+
+h4.date { /* Header 4 - and the author and data headers use this too  */
+  font-size: 18px;
+  font-weight: bold;
+  font-family: "Times New Roman", Times, serif;
+  color: DarkBlue;
+  text-align: center;
+}
+
+h1 { /* Header 1 - and the author and data headers use this too  */
+    font-size: 20px;
+    font-weight: bold;
+    font-family: "Times New Roman", Times, serif;
+    color: darkred;
+    text-align: center;
+}
+
+h2 { /* Header 2 - and the author and data headers use this too  */
+    font-size: 18px;
+    font-weight: bold;
+    font-family: "Times New Roman", Times, serif;
+    color: navy;
+    text-align: left;
+}
+
+h3 { /* Header 3 - and the author and data headers use this too  */
+    font-size: 16px;
+    font-weight: bold;
+    font-family: "Times New Roman", Times, serif;
+    color: navy;
+    text-align: left;
+}
+
+h4 { /* Header 4 - and the author and data headers use this too  */
+    font-size: 14px;
+  font-weight: bold;
+    font-family: "Times New Roman", Times, serif;
+    color: darkred;
+    text-align: left;
+}
+
+/* Add dots after numbered headers */
+.header-section-number::after {
+  content: ".";
+}
+```
+
+
+
+
+```{r setup, include=FALSE}
+# code chunk specifies whether the R code, warnings, and output 
+# will be included in the output files.
+library(knitr)
+knitr::opts_chunk$set(echo = TRUE,           # include code chunk in the output file
+                      warnings = FALSE,       # sometimes, you code may produce warning messages,
+                                              # you can choose to include the warning messages in
+                                              # the output file. 
+                      results = TRUE          # you can also decide whether to include the output
+                                              # in the output file.
+                      )   
+
+
+
+library(car)
+library(caret)
+library(corrplot)
+library(ggcorrplot)
+library(GGally)
+library(ggplot2)
+library(gridExtra)
+library(knitr)
+library(lubridate)
+library(MASS)
+library(mlbench)
+library(pander)
+library(pROC)
+library(tidyverse)
+library(vcd)
+library(reshape2)
+library(neuralnet)
+library(gridExtra)
+
+
+if (!require("ggplot2")) {
+   install.packages("ggplot2")
+   library(ggplot2)
+}
+if (!require("ISLR")) {
+   install.packages("ISLR")
+   library(ISLR)
+}
+if (!require("knitr")) {
+   install.packages("knitr")
+   library(knitr)
+}
+if (!require("ISLR")) {
+   install.packages("ISLR")
+   library(ISLR)
+}
+if (!require("pander")) {
+   install.packages("pander")
+   library(pander)
+}
+if (!require("rpart")) {
+   install.packages("rpart")
+   library(rpart)
+}
+if (!require("rattle")) {
+   install.packages("rattle")
+   library(rattle)
+}
+if (!require("rpart.plot")) {
+   install.packages("rpart.plot")
+   library(rpart.plot)
+}
+if (!require("rpart.plot")) {
+   install.packages("rpart.plot")
+   library(rpart.plot)
+}
+if (!require("RColorBrewer")) {
+   install.packages("RColorBrewer")
+   library(RColorBrewer)
+}
+if (!require("e1071")) {
+   install.packages("e1071")
+   library(e1071)
+}
+if (!require("glmnet")) {
+   install.packages("glmnet")
+   library(glmnet)
+}
+if (!require("pROC")) {
+   install.packages("pROC")
+   library(pROC)
+}
+
+# knitr::opts_knit$set(root.dir = "C:/Users/75CPENG/OneDrive - West Chester University of PA/Documents")
+# knitr::opts_knit$set(root.dir = "C:\\STA490\\w05")
+
+knitr::opts_chunk$set(echo = TRUE,       
+                      warning = FALSE,   
+                      result = TRUE,   
+                      message = FALSE,
+                      comment = NA) 
+
+```
+
+
+
+# Introduction
+
+The assignment this week is a continuation on last weeks assignment In addition to the logistic and perceptron models created last week, decision tree models will also be created. Then using ROC analysis the best model for each of the three model types will be determined. This is for the same customer churn dataset utelized in the previous assignment. 
+
+# Materials
+
+## Data Set
+
+This data set is a small portion of a telecommunication companies customer data. The data set was created to investigate service quality and improve customer retaintion. There are 1,000 observations in the data set and 14 variables which are described below. This is the cleaned data set from last weeks assignment. 
+
+```{r}
+url ="https://chloewinters79.github.io/STA551/Data/churn_output.csv"
+churn = read.csv(url, header = TRUE)
+
+cat_vars <- c("Sex", "Marital_Status", "Phone_service", "International_plan",
+              "Voice_mail_plan", "Multiple_line", "Internet_service",
+              "Technical_support", "Streaming_Videos", "Agreement_period", "Churn")
+
+churn[cat_vars] <- lapply(churn[cat_vars], factor)
+
+```
+
+1. Sex: (chr) customer’s gender
+2. Marital_Status: (chr) marital status of the customer
+3. Term: (int) duration of the customer’s term in months
+4. Phone_service: (chr) indicates whether the customer has phone service (Yes = has phone service; No = does not have phone service)
+5. International_plan: (chr) indicates whether the customer has an international calling plan (Yes = has international plan; No = does not have international plan)
+6. Voice_mail_plan: (chr) indicates whether the customer has a voice mail plan (Yes = has voice mail plan; No = does not have voice mail plan)
+7. Multiple_line: (chr) indicates whether the customer has multiple phone lines (Yes = has multiple lines; No = does not have multiple lines; No phone = does not have phone service)
+8. Internet_service: (chr) type of internet service the customer has (Cable, Fibre optic, DSL, or No internet)
+9. Technical_support: (chr) indicates whether the customer has technical support (Yes = has technical support; No = does not have technical support; No internet = does not have internet service)
+10. Streaming_Videos: (chr) indicates whether the customer has streaming video service (Yes = has streaming service; No = does not have streaming service; No internet = does not have internet service)
+11. Agreement_period: (chr) type of contract agreement (Monthly, One year, or Two year contract)
+12. Monthly_Charges: (num) monthly service charges billed to the customer
+13. Total_Charges: (num) total charges incurred by the customer over their service term
+14. Churn: (chr) indicates customer churn status (Yes = customer churned; No = customer retained)
+
+# Methodolgy & Analysis
+
+Last week logistic and perceptron candidate models were created. Adding onto that three decision tree models will be created using the same testing and training data sets used in the previous model building. After the decision tree models have been created all candidate models that have been created will undergo ROC and AUC analysis and comparison. When conducting this analysis final logistic, perceptron, and decision tree models will be selected to use in the bagging next week. 
+
+## Last Weeks Models
+
+Below is code that will run the models created in last weeks assignment this is so they are loaded in and available for our model analysis later in this assignment. 
+
+```{r}
+# Split data into training and testing
+set.seed(123)
+train_index <- sample(1:nrow(churn), 0.7 * nrow(churn))
+train_data <- churn[train_index, ]
+test_data <- churn[-train_index, ]
+
+# Scale numeric variables using training set only
+scale_min_max <- function(x, min_val, max_val){
+  (x - min_val) / (max_val - min_val)
+}
+
+# Train data
+train_data$Term_scale <- scale_min_max(train_data$Term, min(train_data$Term), max(train_data$Term))
+train_data$Monthly_Charges_scale <- scale_min_max(train_data$Monthly_Charges, min(train_data$Monthly_Charges), max(train_data$Monthly_Charges))
+train_data$Total_Charges_scale <- scale_min_max(train_data$Total_Charges, min(train_data$Total_Charges), max(train_data$Total_Charges))
+
+# Test data
+test_data$Term_scale <- scale_min_max(test_data$Term, min(train_data$Term), max(train_data$Term))
+test_data$Monthly_Charges_scale <- scale_min_max(test_data$Monthly_Charges, min(train_data$Monthly_Charges), max(train_data$Monthly_Charges))
+test_data$Total_Charges_scale <- scale_min_max(test_data$Total_Charges, min(train_data$Total_Charges), max(train_data$Total_Charges))
+
+# Train NN data
+train_nn <- model.matrix(~ . -1, data = train_data[, c(cat_vars, "Term_scale", "Monthly_Charges_scale", "Total_Charges_scale")])
+train_nn <- as.data.frame(train_nn)
+train_nn$Churn_num <- ifelse(train_data$Churn == "Yes", 1, 0)
+
+# Test NN data
+test_nn <- model.matrix(~ . -1, data = test_data[, c(cat_vars, "Term_scale", "Monthly_Charges_scale", "Total_Charges_scale")])
+test_nn <- as.data.frame(test_nn)
+test_nn$Churn_num <- ifelse(test_data$Churn == "Yes", 1, 0)
+
+
+# Full logistic model including all variables
+fullModel <- glm(Churn ~ Sex + Marital_Status + Term + Phone_service + International_plan + 
+                   Voice_mail_plan + Multiple_line + Internet_service + Technical_support + 
+                   Streaming_Videos + Agreement_period + Monthly_Charges + Total_Charges,
+                 data = train_data, family = binomial)
+
+summary(fullModel)
+
+
+# Reduced logistic model
+reducedModel <- glm(Churn ~ Term + Internet_service + Agreement_period + Total_Charges,
+                    data = train_data, family = binomial)
+summary(reducedModel)
+
+# Stepwise logistic model (both directions)
+stepModel <- stepAIC(fullModel, direction = "both", trace = FALSE)
+summary(stepModel)
+
+# Scale numeric variables
+churn_nn <- churn %>%
+  mutate(
+    Term_scale = (Term - min(Term)) / (max(Term) - min(Term)),
+    Monthly_Charges_scale = (Monthly_Charges - min(Monthly_Charges)) / 
+                            (max(Monthly_Charges) - min(Monthly_Charges)),
+    Total_Charges_scale = (Total_Charges - min(Total_Charges)) / 
+                          (max(Total_Charges) - min(Total_Charges))
+  )
+
+# Drop original numeric columns
+churn_nn <- churn_nn[, !(names(churn_nn) %in% c("Term", "Monthly_Charges", "Total_Charges"))]
+
+# Convert Churn to numeric
+churn_nn$Churn_num <- ifelse(churn_nn$Churn == "Yes", 1, 0)
+
+# Convert categorical variables to dummy variables
+cat_vars <- setdiff(colnames(churn_nn), c("Term_scale", "Monthly_Charges_scale", "Total_Charges_scale", "Churn", "Churn_num"))
+
+churn_nn_dummy <- churn_nn %>%
+  mutate(across(all_of(cat_vars), as.factor)) %>%
+  model.matrix(~ . - 1, data = .) %>%
+  as.data.frame()
+
+# Clean column names
+colnames(churn_nn_dummy) <- make.names(colnames(churn_nn_dummy))
+
+# Add numeric target back
+churn_nn_dummy$Churn_num <- churn_nn$Churn_num
+
+# Full Model
+
+NN_vars_full <- setdiff(colnames(churn_nn_dummy), "Churn_num")
+nn_formula_full <- as.formula(paste("Churn_num ~", paste(NN_vars_full, collapse = "+")))
+
+NN_full <- neuralnet(nn_formula_full, data = churn_nn_dummy, hidden = 1,
+                     act.fct = "logistic", linear.output = FALSE)
+
+NN_full$result.matrix
+
+
+# Reduced Model
+NN_vars_reduced <- c("Term_scale", "Total_Charges_scale", "Agreement_periodOne.year.contract", "Agreement_periodTwo.year.contract")
+nn_formula_reduced <- as.formula(paste("Churn_num ~", paste(NN_vars_reduced, collapse = "+")))
+
+NN_reduced <- neuralnet(nn_formula_reduced, data = churn_nn_dummy, hidden = 1,
+                        act.fct = "logistic", linear.output = FALSE)
+
+NN_reduced$result.matrix
+
+```
+
+## Decision Trees
+
+For the decision tree model we are going to analyze three different options. The first will be a non-penalized model where there is no deduction for false negatives or false positives. Then we will be looking at a model that penalizes for false negatives, followed my a model that penalized for false positives. 
+
+### Non-peanalized Model
+
+This first model is a non-penalized model which means there are no deductions made when the model creates a false postive or negative result. Looking at this model breakdown the first split begins with the agreement period for the contract. The following split is on the monthly charges and whether or not those charges are under 95. After that the split is whether or not the term is greater than or equal to 12. Insterestingly enough we then go back to a Monthly Charge split this time seeing if its under 44. Then we are followed by two Total Charge splits, the first one being if total charges are under 45 and then the next and final split being if charges are greater than or equal to 629. 
+
+```{r}
+
+tree.builder = function(in.data, fp, fn, purity){
+   tree = rpart(Churn ~ .,                
+                data = in.data, 
+                na.action  = na.rpart,
+                method = "class",
+                model  = FALSE,
+                x = FALSE,
+                y = TRUE,
+                parms = list(
+                         loss = matrix(c(0, fp, fn, 0), ncol = 2, byrow = TRUE),
+                         split = purity),
+                control = rpart.control(
+                        minsplit = 10,
+                        minbucket = 10,
+                        cp = 0.01,
+                        xval = 10)
+             )
+}
+
+
+```
+ 
+ 
+```{r}
+gini.tree.1.1 <- tree.builder(train_data, 1, 1, "gini")
+rpart.plot(gini.tree.1.1, main = "Churn Tree: Gini Non-Penalized")
+
+
+```
+
+### Peanalized - False Negative
+
+Now that the nonpenalized model has been created it is time to look at a peanalized model for false negatives. For this data set, a false negative would mean that the model incorrectly identifies a customer as a churn risk when they would actually stay loyal. This model also starts out with the split on the length of the Agreement Period. Then it has a left sided tree and a right sided tree. The left sided tree then splits on whether or not total charges are under 3933. Followed by a term greater than or equal to 58, then split on Multiple Lines, then gain on Term, then two total charge splits and an internet service split. Moving to the right tree it splits first on techincal support, followed by three total charges split, the first one is greater than or equal to 218, followed by a less than 132 split, and ending with a greater than or equal to 47 split. 
+
+```{r}
+# Penalized: FN = 10 times FP
+gini.tree.1.10 <- tree.builder(train_data, 1, 10, "gini")
+
+# Plot
+rpart.plot(gini.tree.1.10, main = "Churn Tree: Gini Penalized (FN = 10x)")
+
+```
+
+### Peanalize - False Positive
+
+Finishing out our model creation we are going to look at a peanalizing model for false positives. For this data set, a false postive would mean that the model incorrectly identifies a customer as loyal when they actually leave. This model again splits on the agreement length. Followed by two monthly charges splits, the first one is for monthly charges under 95 and then its monthly charges greater than or equal to 101. The final split is for total charges greater than or equal to 2256. 
+
+```{r}
+# Penalized: FP = 10 times FN
+gini.tree.10.1 <- tree.builder(train_data, 10, 1, "gini")
+
+rpart.plot(gini.tree.10.1, main = "Churn Tree: Gini Penalized (FP = 10x)")
+
+
+```
+That is the third and final decision tree model we will be looking at for this data set. The next section will go into assessing both the canidate models from last weeks assignment and the three canidate models from above. This will allow us to determine the best canidate models for each of the three model types.  
+
+## ROC Analysis
+
+ROC Analysis and AUC will be used to determine which canidate models are the best from the models created over this week and last week. We are going to start with the logistic models, then look at the perceptron models, finishing with the decision trees. 
+
+### Logistic Model
+
+Looking at the results for our logistic models we can see that in terms of ranking the AUC output the stepwise model narrowly beats out the full model which narrowly beats out the reduced model. When selecting final models not only is AUC important but also making sure the model is reduced down if possible. Not only is the stepwise model smaller than the full model and equally sized to the reduced model, it has the highest AUC, which is ideal when selecting a final model. Taking all these factors into consideration, it makes sense to use the stepwise model as the final logistic regression model. 
+
+
+```{r}
+
+# --- Predictions for each logistic model ---
+pred_full    <- predict(fullModel, newdata = test_data, type = "response")
+pred_reduced <- predict(reducedModel, newdata = test_data, type = "response")
+pred_step    <- predict(stepModel, newdata = test_data, type = "response")
+
+# --- ROC and AUC for each ---
+roc_full    <- roc(test_data$Churn, pred_full, levels = c("No", "Yes"))
+roc_reduced <- roc(test_data$Churn, pred_reduced, levels = c("No", "Yes"))
+roc_step    <- roc(test_data$Churn, pred_step, levels = c("No", "Yes"))
+
+auc_full    <- auc(roc_full)
+auc_reduced <- auc(roc_reduced)
+auc_step    <- auc(roc_step)
+
+# --- AUC summary table ---
+AUC_logistic <- data.frame(
+  Model = c("Full Logistic", "Reduced Logistic", "Stepwise Logistic"),
+  AUC = c(auc_full, auc_reduced, auc_step)
+)
+AUC_logistic
+
+plot(roc_full, col = "blue", lwd = 2, main = "ROC Curves for Logistic Models")
+plot(roc_reduced, col = "red", lwd = 2, lty = 2, add = TRUE)
+plot(roc_step, col = "darkgreen", lwd = 2, lty = 3, add = TRUE)
+abline(0, 1, lty = 2, col = "gray")
+
+legend("bottomright",
+       legend = c(
+         paste("Full (AUC =", round(auc_full, 3), ")"),
+         paste("Reduced (AUC =", round(auc_reduced, 3), ")"),
+         paste("Stepwise (AUC =", round(auc_step, 3), ")")
+       ),
+       col = c("blue", "red", "darkgreen"), lty = 1:3, lwd = 2, bty = "n")
+
+
+```
+
+### Perceptron Model
+
+Moving onto the perceptron models we only have two to look at, the full and reduced model. When looking at this output we see something that is not common, a perfect 1.0 AUC and a right angle. While in typical scenarios a AUC of 1 is ideal, the likelihood of this actually happening is close to impossible. Some trouble shooting went on behind the scenes in an attemt to correct this and get a more accurate AUC but it was unsuccessful. It seems to be some kind of issue with data leakage that is unable to be fixed. Considering this unnatural AUC value and the full model being so complex it is typically not ideal, it makes sense not to move forward with this model. Thankfully, the reduced model does still have a good AUC value and it will work as the final perceptron model moving forward. 
+
+```{r}
+# Split churn_nn_dummy into train/test
+set.seed(123)
+train_index <- sample(1:nrow(churn_nn_dummy), 0.7 * nrow(churn_nn_dummy))
+train_nn <- churn_nn_dummy[train_index, ]
+test_nn  <- churn_nn_dummy[-train_index, ]
+
+# Variables for full and reduced perceptron
+NN_vars_full <- setdiff(colnames(train_nn), "Churn_num")
+NN_vars_reduced <- c("Term_scale", "Total_Charges_scale", 
+                     "Agreement_periodOne.year.contract", 
+                     "Agreement_periodTwo.year.contract")
+
+# Train full perceptron
+NN_full <- neuralnet(as.formula(paste("Churn_num ~", paste(NN_vars_full, collapse="+"))),
+                     data = train_nn, hidden = 1,
+                     act.fct = "logistic", linear.output = FALSE)
+
+# Train reduced perceptron
+NN_reduced <- neuralnet(as.formula(paste("Churn_num ~", paste(NN_vars_reduced, collapse="+"))),
+                        data = train_nn, hidden = 1,
+                        act.fct = "logistic", linear.output = FALSE)
+
+# Predictions on test set
+NN_full_pred    <- compute(NN_full, test_nn[, NN_vars_full])$net.result
+NN_reduced_pred <- compute(NN_reduced, test_nn[, NN_vars_reduced])$net.result
+
+# ROC and AUC
+roc_NN_full    <- roc(test_nn$Churn_num, NN_full_pred)
+roc_NN_reduced <- roc(test_nn$Churn_num, NN_reduced_pred)
+
+auc_NN_full    <- auc(roc_NN_full)
+auc_NN_reduced <- auc(roc_NN_reduced)
+
+# --- AUC summary table ---
+AUC_perceptron <- data.frame(
+  Model = c("Full Perceptron", "Reduced Perceptron"),
+  AUC = c(auc_NN_full, auc_NN_reduced)
+)
+AUC_perceptron
+
+# --- Plot ROC curves ---
+plot(roc_NN_full, col = "purple", lwd = 2, main = "ROC Curves for Perceptron Models (Test Data)")
+plot(roc_NN_reduced, col = "orange", lwd = 2, lty = 2, add = TRUE)
+abline(0, 1, lty = 2, col = "gray")
+
+legend("bottomright",
+       legend = c(
+         paste("Full (AUC =", round(auc_NN_full, 3), ")"),
+         paste("Reduced (AUC =", round(auc_NN_reduced, 3), ")")
+       ),
+       col = c("purple", "orange"), lty = 1:2, lwd = 2, bty = "n")
+
+
+```
+
+### Decision Tree Model
+
+Finally it is time to look at the decision tree models. This final model decision is slightly different because while we have 3 models we will be doing 6 ROC AUC comparisons. This is because each of the three models has a gini and info version. At their core the gini and info versions of a model are the same, they just use slighlty different criteria when creating the tree. Looking at the output the model with the best AUC out of the 6 is the info false negative model, represented on the graph as info.1.10. This means the false negative model will be the final decision tree model for the future analysis. 
+
+```{r}
+SenSpe <- function(in.data, fp, fn, purity){
+  cutoff = seq(0, 1, length = 20)
+  model = tree.builder(in.data, fp, fn, purity)
+  pred = predict(model, newdata = in.data, type = "prob")
+  
+  # Initialize matrix for Sensitivity and Specificity
+  senspe.mtx = matrix(0, ncol = length(cutoff), nrow = 2)
+  
+  for (i in 1:length(cutoff)){
+    pred.out = ifelse(pred[,"Yes"] >= cutoff[i], "Yes", "No")
+    TP = sum(pred.out == "Yes" & in.data$Churn == "Yes")
+    TN = sum(pred.out == "No"  & in.data$Churn == "No")
+    FP = sum(pred.out == "Yes" & in.data$Churn == "No")
+    FN = sum(pred.out == "No"  & in.data$Churn == "Yes")
+    
+    senspe.mtx[1,i] = TP / (TP + FN)  # Sensitivity
+    senspe.mtx[2,i] = TN / (TN + FP)  # Specificity
+  }
+  
+  # ROC and AUC calculation
+  ROCobj <- roc(in.data$Churn == "Yes", pred[,"Yes"])
+  AUC = auc(ROCobj)
+  
+  list(senspe.mtx = senspe.mtx, AUC = round(AUC, 3))
+}
+
+```
+
+
+```{r}
+# Non-penalized
+giniROC11   = SenSpe(in.data = train_data, fp = 1, fn = 1, purity = "gini")
+infoROC11   = SenSpe(in.data = train_data, fp = 1, fn = 1, purity = "information")
+
+# Penalize false negatives (customers leaving)
+giniROC110  = SenSpe(in.data = train_data, fp = 1, fn = 10, purity = "gini")
+infoROC110  = SenSpe(in.data = train_data, fp = 1, fn = 10, purity = "information")
+
+# Penalize false positives (customers incorrectly flagged as leaving)
+giniROC101  = SenSpe(in.data = train_data, fp = 10, fn = 1, purity = "gini")
+infoROC101  = SenSpe(in.data = train_data, fp = 10, fn = 1, purity = "information")
+
+
+```
+
+
+```{r}
+
+par(pty = "s")  # square plot
+colors = c("#008B8B", "#00008B", "#8B008B", "#8B0000", "#8B8B00", "#8B4500")
+
+plot(1 - giniROC11$senspe.mtx[2,], giniROC11$senspe.mtx[1,], 
+     type = "l", 
+     xlim = c(0, 1), 
+     ylim = c(0, 1), 
+     xlab = "1 - Specificity: FPR", 
+     ylab = "Sensitivity: TPR", 
+     col = colors[1], 
+     lwd = 2,
+     main = "ROC Curves of Decision Trees", 
+     cex.main = 0.9, 
+     col.main = "navy")
+
+abline(0, 1, lty = 2, col = "orchid4", lwd = 2)
+
+lines(1 - infoROC11$senspe.mtx[2,], infoROC11$senspe.mtx[1,], 
+      col = colors[2], lwd = 2, lty = 2)
+lines(1 - giniROC110$senspe.mtx[2,], giniROC110$senspe.mtx[1,],
+      col = colors[3], lwd = 2)
+lines(1 - infoROC110$senspe.mtx[2,], infoROC110$senspe.mtx[1,], 
+      col = colors[4], lwd = 2, lty = 2)
+lines(1 - giniROC101$senspe.mtx[2,], giniROC101$senspe.mtx[1,], 
+      col = colors[5], lwd = 2, lty = 4)
+lines(1 - infoROC101$senspe.mtx[2,], infoROC101$senspe.mtx[1,], 
+      col = colors[6], lwd = 2, lty = 2)
+
+legend("bottomright",
+       c(paste("gini.1.1,  AUC =", giniROC11$AUC), 
+         paste("info.1.1,  AUC =", infoROC11$AUC), 
+         paste("gini.1.10, AUC =", giniROC110$AUC), 
+         paste("info.1.10, AUC =", infoROC110$AUC),
+         paste("gini.10.1, AUC =", giniROC101$AUC), 
+         paste("info.10.1, AUC =", infoROC101$AUC)),
+       col = colors, 
+       lty = rep(1:2, 3), 
+       lwd = rep(2, 6), 
+       cex = 0.8, 
+       bty = "n")
+
+```
+
+```{r}
+
+# Create AUC summary table
+AUC_results <- data.frame(
+  Model = c("Gini (1,1)", "Gini (1,10)", "Gini (10,1)",
+            "Info (1,1)", "Info (1,10)", "Info (10,1)"),
+  AUC = c(giniROC11$AUC, giniROC110$AUC, giniROC101$AUC,
+          infoROC11$AUC, infoROC110$AUC, infoROC101$AUC)
+)
+
+AUC_results
+
+```
+
+This concludes all of the ROC analysis required for this weeks assignment. Next week there will be the addition of bagging and the ROC analysis will be rerun to determine if any of these conclusions change. For now though, we are moving forward with the stepwise logistic model, the reduced perceptron model, and the info false negative model. 
+
+# Results & Conclusions
+
+The ROC and AUC analysis and comparison was able to provide clear recommendations for the final model selection for our logistic, perceptron, and decision tree models. The stepwise logistic model was the perfect balance of a reduced model and a high AUC. While our perceptron model had some AUC issues with its full model, we are confident moving forward with the reduced model. Finally, the information false negative decision tree was the strongest out of all 6 options that were up for selection. Each of these models have a sufficient balance of strength and interpretability making them all the best final models out of the tested canidate models. Next week our analysis will continue with the addition of bagging which will hopefully result in strengthening these selected final models. 
