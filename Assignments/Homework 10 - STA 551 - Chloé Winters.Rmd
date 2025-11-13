@@ -1,0 +1,374 @@
+---
+title: "PCA and Clustering on Breast Cancer Data"
+author: "Chloé Winters"
+date: "2025-11-13"
+output:
+  html_document:
+    toc: yes
+    toc_float: yes
+    toc_depth: 4
+    fig_width: 6
+    fig_height: 4
+    fig_caption: yes
+    number_sections: yes
+    toc_collapsed: yes
+    code_folding: hide
+    code_download: yes
+    smooth_scroll: yes
+    theme: lumen
+  pdf_document: 
+    toc: yes
+    toc_depth: 4
+    fig_caption: yes
+    number_sections: yes
+  word_document:
+    toc: yes
+    toc_depth: '4'
+---
+
+<style type="text/css">
+h1.title {
+  font-size: 20px;
+  color: DarkRed;
+  text-align: center;
+}
+h4.author { /* Header 4 - and the author and data headers use this too  */
+    font-size: 18px;
+  font-family: "Times New Roman", Times, serif;
+  color: DarkRed;
+  text-align: center;
+}
+h4.date { /* Header 4 - and the author and data headers use this too  */
+  font-size: 18px;
+  font-family: "Times New Roman", Times, serif;
+  color: DarkBlue;
+  text-align: center;
+}
+h1 { /* Header 3 - and the author and data headers use this too  */
+    font-size: 22px;
+    font-family: "Times New Roman", Times, serif;
+    color: darkred;
+    text-align: center;
+}
+h2 { /* Header 3 - and the author and data headers use this too  */
+    font-size: 18px;
+    font-family: "Times New Roman", Times, serif;
+    color: navy;
+    text-align: left;
+}
+
+h3 { /* Header 3 - and the author and data headers use this too  */
+    font-size: 15px;
+    font-family: "Times New Roman", Times, serif;
+    color: navy;
+    text-align: left;
+}
+
+h4 { /* Header 4 - and the author and data headers use this too  */
+    font-size: 18px;
+    font-family: "Times New Roman", Times, serif;
+    color: darkred;
+    text-align: left;
+}
+</style>
+
+
+
+```{r setup, include=FALSE}
+# code chunk specifies whether the R code, warnings, and output 
+# will be included in the output files.
+library(knitr)
+knitr::opts_chunk$set(echo = TRUE,           # include code chunk in the output file
+                      warnings = FALSE,       # sometimes, you code may produce warning messages,
+                                              # you can choose to include the warning messages in
+                                              # the output file. 
+                      results = TRUE          # you can also decide whether to include the output
+                                              # in the output file.
+                      )   
+
+
+
+library(knitr)
+library(pander)
+library(mlbench)
+library(dplyr)
+library(readr)
+library(stringr)
+library(purrr)
+library(ggcorrplot)
+library(GGally)
+library(ggplot2)
+library(gridExtra)
+
+knitr::opts_chunk$set(echo = TRUE,      
+                      warnings = FALSE,   
+                      messages = FALSE,  
+                      results = TRUE,
+                      comment = NA
+                      )   
+
+```
+
+
+# Introduction
+
+This assignment will look at breast cancer data. First it will start with going throuugh the exploratory data analysis for this data set. Following that, PCA and Clustering methodolgy to analyse the data. 
+
+# Materials 
+
+## Data Set
+
+According to the World Health Organization (WHO) breast cancer is one of the most common cancers for women worldwide, and is the second leading cause of cancer related deaths in women. This makes identifying breast cancer in women so important because the sooner you start treating a patient the better. 
+
+```{r}
+url ="https://chloewinters79.github.io/STA551/Data/syntheticBreastCancerData.csv"
+cancer = read.csv(url, header = TRUE)
+```
+
+The data set being used for this assignment is a synthetic breast cancer data set, there are 600 observations in the data set and it consists of 11 variables, 10 of them are numerical and 1 of them is categorical. The 11 variables are detailed below,
+
+1. Sample_No: (num) unique identifier
+2. Thickness_of_Clump: (num) Benign cells are more likely monolayers and malignant or cancerous cells are multilayer
+3. Cell_Size_Uniformity: (num) Benign cells does not vary in size and malignant or cancer cell vary in size
+4. Cell_Shape_Uniformity: (num) Benign cells do not vary in shape, while malignant or cancerous cells vary in shape
+5. Marginal_Adhesion: (num) Benign cells are more likely to stick together, while malignant or cancerous cells are loose or do not stick together
+6. Single_Epithelial_Cell_Size: (num) In benign cases epithelial cells are normal in size, while in malignant or cancerous cases they are significantly enlarged
+7. Bare_Nuclei: (num) In benign cases the bare nuclei are not surrounded by cytoplasm, while in malignant or cancerous cases they are surrounded by cytoplasm
+8. Bland_Chromatin: (num) Benign cells have uniform or fine chromatin, while malignant or cancerous cells have coarse chromatin
+9. Normal_Nucleoli: (num) In benign cases nucleoli are very small, while in malignant or cancerous cases nucleoli are more prominent
+10. Mitoses: (num) In benign cases cell growth is normal, while in malignant or cancerous cases there is abnormal cell growth
+11. Outcome: (cat) "No" denotes benign breast cancer, "Yes" denotes malignant breast cancer
+
+It should be noted that while numeric, variables 2 - 10 are integers from 1-10.
+
+## Expoloratory Data Analysis
+
+First we are going to look at the summary information of the data set. Looking at the variables most of their means seem to be in the 3-5 range, with Mitoses having the lowest mean at 2.093, and Thickness_of_Clump having the largest mean at 5.41. There does seem to be some indication of right skewness with a majority of the variables, however, we will wait to look at some visual representation before making any final conclusions. A table for the categorical variable outcome was also created, there are 380 No observations, which are observations where the cancer was benign and 220 Yes observations, where the cancer was malignant. While this is not a 50/50 split, it is almost a 60/40 split, which is not skewed heavily enough in either direction that there seems to be any cause for cancer at this point. 
+
+```{r}
+summary(cancer)
+table(cancer$Outcome)
+```
+Moving onto a visual analysis of the variables, histograms were created for the following variables, Thickness_of_Clump, Cell_Size_Uniformity, Cell_Shape_Uniformity, Marginal_Adhesion, Single_Epithelial_Cell_Size, Bare_Nuclei, Bland_Chromatin, Normal_Nucleoli, and Mitosis. Looking at the output none of the variables appear to have a normal distribution. With the exception of the Thickness_of_Clump variable having a potential uniform distribution, all the other variables have a right skewness, with the variable Mitoses having the most severe skewness. The variables Normal_Nucleoli, Bare_Nuclei, Cell_Shape_Uniformity, Cell_Size_Uniformity, and Marginal_Adhesions having slightly less severe right skewness than Mitosis, but more severe than Single_Epithelial_Cell_Size and Bland_Chromatin, which while the least severe, are still clearly exhibiting a right skewness. 
+
+
+```{r}
+
+par(mfrow = c(2,2))
+
+hist(cancer$Thickness_of_Clump, main = "Distribution of Clump Thickness")
+hist(cancer$Cell_Size_Uniformity, main = "Distribution of Cell Size Uniformity")
+hist(cancer$Cell_Shape_Uniformity, main = "Distribution of Cell Shape Uniformity")
+
+hist(cancer$Marginal_Adhesion, main = "Distribution of Marginal Adhesion")
+hist(cancer$Single_Epithelial_Cell_Size, main = "Distribution of Single Epithelial Cell Size")
+hist(cancer$Bare_Nuclei, main = "Distribution of Bare Nuclei")
+
+hist(cancer$Bland_Chromatin, main = "Distribution of Bland Chromatin")
+hist(cancer$Normal_Nucleoli, main = "Distribution of Normal Nucleoli")
+hist(cancer$Mitoses, main = "Distribution of Mitoses")
+```
+Next box plots were created to look at the relationship between the numerical variables and the outcome variable. Looking at the output it appears that for all the variables the "No" outcome was consistent with the right skewness seen in the histograms above. When looking at the output for all the variables with the "Yes" outcome with the exception of the Mitoses variable all the "Yes" outcomes are showing a left skewness, the Mitoses variable shows right skewness. None of the boxplots show a normal distribution, all boxplots show either right or left skewness. 
+
+```{r}
+
+# Make individual plots
+p1 <- ggplot(cancer, aes(x = Outcome, y = Thickness_of_Clump, fill = Outcome)) +
+  geom_boxplot(alpha = 0.7) +
+  labs(title = "Clump Thickness by Outcome", y = "Clump Thickness") +
+  theme_minimal()
+
+p2 <- ggplot(cancer, aes(x = Outcome, y = Cell_Size_Uniformity, fill = Outcome)) +
+  geom_boxplot(alpha = 0.7) +
+  labs(title = "Cell Size Uniformity by Outcome", y = "Cell Size Uniformity") +
+  theme_minimal()
+
+p3 <- ggplot(cancer, aes(x = Outcome, y = Cell_Shape_Uniformity, fill = Outcome)) +
+  geom_boxplot(alpha = 0.7) +
+  labs(title = "Cell Shape Uniformity by Outcome", y = "Cell Shape Uniformity") +
+  theme_minimal()
+
+p4 <- ggplot(cancer, aes(x = Outcome, y = Marginal_Adhesion, fill = Outcome)) +
+  geom_boxplot(alpha = 0.7) +
+  labs(title = "Marginal Adhesion by Outcome", y = "Marginal Adhesion") +
+  theme_minimal()
+
+p5 <- ggplot(cancer, aes(x = Outcome, y = Single_Epithelial_Cell_Size, fill = Outcome)) +
+  geom_boxplot(alpha = 0.7) +
+  labs(title = "Single Epithelial Cell Size by Outcome", y = "Single Epithelial Cell Size") +
+  theme_minimal()
+
+p6 <- ggplot(cancer, aes(x = Outcome, y = Bare_Nuclei, fill = Outcome)) +
+  geom_boxplot(alpha = 0.7) +
+  labs(title = "Bare Nuclei by Outcome", y = "Bare Nuclei") +
+  theme_minimal()
+
+p7 <- ggplot(cancer, aes(x = Outcome, y = Bland_Chromatin, fill = Outcome)) +
+  geom_boxplot(alpha = 0.7) +
+  labs(title = "Bland Chromatin by Outcome", y = "Bland Chromatin") +
+  theme_minimal()
+
+p8 <- ggplot(cancer, aes(x = Outcome, y = Normal_Nucleoli, fill = Outcome)) +
+  geom_boxplot(alpha = 0.7) +
+  labs(title = "Normal Nucleoli by Outcome", y = "Normal Nucleoli") +
+  theme_minimal()
+
+p9 <- ggplot(cancer, aes(x = Outcome, y = Mitoses, fill = Outcome)) +
+  geom_boxplot(alpha = 0.7) +
+  labs(title = "Mitoses by Outcome", y = "Mitoses") +
+  theme_minimal()
+
+# Arrange into pages (2x2 layout per page)
+grid.arrange(p1, p2, p3, p4, ncol = 2)   # Page 1
+grid.arrange(p5, p6, p7, p8, ncol = 2)   # Page 2
+grid.arrange(p9, ncol = 1)               # Page 3
+
+
+```
+Considering that all the numerical variables are integers between 1-10 a traditional pairwise graph does not make sense because it would be quite cluttered and correlation is harder to determine in those kinds of plots when the data is not continuous. To ensure we are still able to look at the correlation between variables, it made sense to do a correlation heat map to analyze the relationship between the numerical variables. Cell_Size_Uniformity and Cell_Shape_Uniformity are the most highly correlated variables with a correlation of 0.84, which is considered a strong correlation. Considering both these variables deal with a type of cell uniformity it does make sense that they would be highly correlated. There are also 16 pairings in the 0.60 - 0.71 range which would be considered strong correlation. Additionally, only 4 pairing are under 0.40 which anything under 0.40 would either be considered weak or very weak, no correlation. Since this assignment is going to be covering Principal Component Analysis (PCA) and Clustering having data with mid to high levels of variable correlation is actually ideal. Since we now know we are working with several numerical variables that are highly correlated we can move into the PCA and Clustering aspects of this assignment. 
+
+```{r}
+# Pearson correlation matrix
+corr_mat_pearson <- cor(cancer[ ,2:10], method = "pearson")
+
+# Pearson correlation heatmap
+ggcorrplot(corr_mat_pearson, 
+           hc.order = TRUE,
+           type = "lower",
+           lab = TRUE,
+           lab_size = 3,
+           method = "square",
+           colors = c("blue", "white", "red"),
+           title = "Pearson Correlation Heatmap of Predictors",
+           ggtheme = theme_minimal)
+```
+
+
+# Methodolgy & Analysis 
+
+This assignment is going to be looking at breast cancer data using principal component analysis and two clustering techniques, k-means and hierarchical. The goal is to help address the multicollinearity seen in the EDA and identify groupings within the data that correlate to patterns in the diagnosis of the tumors. In the end there will hopefully be models to help better understand the patterns in diagnosing these tumors so malignant tumors can be properly identified and treated. 
+
+
+## Principal Component Analysis 
+
+A main goal of utilizing principal component analysis is reducing that variable correlation and addressing the multicollinearity we are currently seeing. This happens by transforming the data. In this case we will be undergoing a variable scanning process for all variables besides the ID variable and our outcome variable. After the transformation the PCA will be run on the data and summarized. The PCA run on the data will created a number of new variables based on information from our original variables. Then the decision will be made on how many principal components should be kept for our final analysis.
+
+```{r}
+# Principal Component Analysis
+
+
+# Remove ID and categorical outcome variable
+cancer_num <- cancer[, 2:10]
+
+# Scale numeric variables
+cancer_scaled <- scale(cancer_num)
+
+# Run PCA
+pca_model <- prcomp(cancer_scaled, center = TRUE, scale. = TRUE)
+
+# Summary of PCA
+summary(pca_model)
+
+# Scree plot showing % variance explained
+library(factoextra)
+fviz_eig(pca_model, addlabels = TRUE, ylim = c(0, 60))
+
+# PCA biplot colored by cancer outcome
+fviz_pca_biplot(pca_model,
+                geom.ind = "point",
+                col.ind = cancer$Outcome, 
+                palette = c("#00AFBB", "#FC4E07"),
+                addEllipses = TRUE,
+                label = "var",
+                col.var = "black",
+                title = "PCA Biplot Colored by Outcome")
+
+# Loadings (to interpret variable contributions)
+pca_model$rotation
+
+
+
+```
+Looking at the output from the PCA there are several conclusions to be made. As to be expected in PCA the first principal component explains a majority of the data with it explaining 62% of the variance. Then moving onto the second principal component it explains 8.706% of the variance for a cumulative total of 70.705% and this gradually increases until the 9th and final principal component is reached. There is also information on how these principal components relate back to the original variables. The first principal component has negative loading for the variables cell size uniformity, cell shape uniformity, bare nuclei, and normal nucleoli. This indicates that this principal component is representative of the variables dealing will cell abnormality and that as those variables increase so does the likelihood of the tumors malignancy. Looking at the second principal component it seems to be mainly representative of the variable mitosis which is associated with the cells division. So the two principal components are representing different aspects of the cells. Considering all this information at this time it seems only utilizing the first two principal components makes the most sense. 
+
+## Clustering 
+
+K-Means and Hierarchical Clustering methods are two methods of unsupervised learning that help identify natural groupings in data. The k-means method focuses on partitioning the data into (k) number of clusters. In this analysis there will be the plotting of a chart known as the "elbow method" that will help advise the optimal number of (k) clusters. After the optimal number of clusters have been determine a graph of the data will be showcased showing the data divided into those clusters. Moving on to the hierarchical clustering this is almost reminiscent of decision tree modeling. This process created nested trees called dendograms and groups together data based on their similarities. Despite both being clustering methods the have differences that make them unique and both beneficial so both methods will be used in the analysis for this assignment. 
+
+
+```{r}
+
+# K-Means Clustering
+
+
+# Determine optimal number of clusters (elbow method)
+fviz_nbclust(cancer_scaled, kmeans, method = "wss") +
+  geom_vline(xintercept = 2, linetype = 2) +
+  labs(title = "Elbow Method for Optimal k")
+
+# Run K-means with k = 2
+set.seed(123)
+kmeans_result <- kmeans(cancer_scaled, centers = 2, nstart = 25)
+
+# Visualize K-means clusters
+fviz_cluster(kmeans_result, data = cancer_scaled,
+             palette = c("#2E9FDF", "#FC4E07"),
+             ellipse.type = "norm",
+             geom = "point",
+             ggtheme = theme_minimal(),
+             main = "K-Means Clustering (k = 2)")
+
+# Compare K-means clusters with true Outcome
+table(kmeans_result$cluster, cancer$Outcome)
+```
+Starting with the output from the k-means clustering analysis, the "elbow method" recommends a cutoff at 2 clusters or k=2. Using this cutoff a clustering graph is created where blue is all the data in the first cluster and 2 is all the data in the second cluster. Looking at this graph it is clear the first cluster is wider and larger and captures more spread out data while cluster 2 is smaller and narrower and captures data points that are almost on top of each other. There is also output that indicates how many malignant and non malignant cases were put into each cluster. Cluster 1 has 207 malignant cases and 12 benign cases while in cluster 2 there are 386 benign cases and 13 malignant cases. This shows that the clusters are effectively capturing the separation between the malignant and benign tumors. While there are a few misclassifications considering this is only a 2 cluster method a few misclassifications are to be expected. Overall a majority of the observations are properly classified indicating a strong k-means clustering analysis. 
+
+
+```{r}
+# Hierarchical Clustering
+
+# Compute distance matrix
+dist_mat <- dist(cancer_scaled, method = "euclidean")
+
+# Perform hierarchical clustering
+hc <- hclust(dist_mat, method = "ward.D2")
+
+# Plot dendrogram
+# Hierarchical Clustering 
+
+# Convert scaled data to data frame
+scales.hierarch <- as.data.frame(cancer_scaled)
+
+# Compute distance matrix using Euclidean distance
+distance <- dist(scales.hierarch, method = "euclidean")
+
+# Perform hierarchical clustering using Complete Linkage
+hc1 <- hclust(distance, method = "complete")
+
+# Basic dendrogram with rectangles
+plot(hc1,
+     cex = 0.6,
+     labels = FALSE,
+     hang = -1,
+     xlab = "",
+     main = "Dendrogram: Hierarchical Clustering (Complete Linkage)")
+
+# Draw rectangles for 2 clusters (you can change to 5 if desired)
+rect.hclust(hc1, k = 2, border = c("#00AFBB", "#FC4E07"))
+
+
+hc_clusters <- cutree(hc, k = 2)
+
+
+# Compare hierarchical clusters to true Outcome
+table(hc_clusters, cancer$Outcome)
+
+
+```
+
+Similar to the results in the k-means clustering output the hierarchical clustering also utilizes two groups. However, there is a switch in this cluster compared to the k-means. Instead of the malignant tumors being mainly captured in the first cluster we see the benign tumors being captured in this cluster. The first cluster has 358 benign cases and 5 malignant, while the second cluster has 22 benign cases and 215 malignant cases. Again, there is some misclassification but overall the amount of misclassification is not concerning considering the size of the data set. Overall, this hierarchical clustering model seems to be very strong just like the k-means model. 
+
+
+# Results & Conclusions
+
+This assignment showcased the benefits of using these unsupervised learning methods in addressing data sets with multicollinearity issues. The PCA analysis allowed for over 70% of the total variance to be explained by the two principal components, and these components mainly addressed cell abnormality and behavior. This was able to indicate what important tumor diagnosis factors are. Moving on to the clustering methods both the k-means and hierarchical recommended 2 clusters both of which did a good job at classifying malignant and benign tumors, despite a few misclassifications in both models. Overall, there was strong consistency in tumor classification across the three different unsupervised learning methods. Next week the assignment will be continued and expanded upon with Local Outlier Facotr (LOF) and the building of binary classification models. 
