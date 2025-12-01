@@ -1,0 +1,733 @@
+---
+title: "PCA, Clustering, with LOF on Binary Models for Breast Cancer Data"
+author: "Chloé Winters"
+date: "2025-11-13"
+output:
+  html_document:
+    toc: yes
+    toc_float: yes
+    toc_depth: 4
+    fig_width: 6
+    fig_height: 4
+    fig_caption: yes
+    number_sections: yes
+    toc_collapsed: yes
+    code_folding: hide
+    code_download: yes
+    smooth_scroll: yes
+    theme: lumen
+  pdf_document: 
+    toc: yes
+    toc_depth: 4
+    fig_caption: yes
+    number_sections: yes
+  word_document:
+    toc: yes
+    toc_depth: '4'
+---
+
+<style type="text/css">
+h1.title {
+  font-size: 20px;
+  color: DarkRed;
+  text-align: center;
+}
+h4.author { /* Header 4 - and the author and data headers use this too  */
+    font-size: 18px;
+  font-family: "Times New Roman", Times, serif;
+  color: DarkRed;
+  text-align: center;
+}
+h4.date { /* Header 4 - and the author and data headers use this too  */
+  font-size: 18px;
+  font-family: "Times New Roman", Times, serif;
+  color: DarkBlue;
+  text-align: center;
+}
+h1 { /* Header 3 - and the author and data headers use this too  */
+    font-size: 22px;
+    font-family: "Times New Roman", Times, serif;
+    color: darkred;
+    text-align: center;
+}
+h2 { /* Header 3 - and the author and data headers use this too  */
+    font-size: 18px;
+    font-family: "Times New Roman", Times, serif;
+    color: navy;
+    text-align: left;
+}
+
+h3 { /* Header 3 - and the author and data headers use this too  */
+    font-size: 15px;
+    font-family: "Times New Roman", Times, serif;
+    color: navy;
+    text-align: left;
+}
+
+h4 { /* Header 4 - and the author and data headers use this too  */
+    font-size: 18px;
+    font-family: "Times New Roman", Times, serif;
+    color: darkred;
+    text-align: left;
+}
+</style>
+
+
+
+```{r setup, include=FALSE}
+# code chunk specifies whether the R code, warnings, and output 
+# will be included in the output files.
+library(knitr)
+knitr::opts_chunk$set(echo = TRUE,           # include code chunk in the output file
+                      warnings = FALSE,       # sometimes, you code may produce warning messages,
+                                              # you can choose to include the warning messages in
+                                              # the output file. 
+                      results = TRUE          # you can also decide whether to include the output
+                                              # in the output file.
+                      )   
+
+
+
+library(knitr)
+library(pander)
+library(mlbench)
+library(dplyr)
+library(readr)
+library(stringr)
+library(purrr)
+library(ggcorrplot)
+library(GGally)
+library(ggplot2)
+library(gridExtra)
+library(dbscan)
+library(dplyr)
+library(ggplot2)
+library(pROC)
+library(caret)
+library(randomForest)
+
+
+knitr::opts_chunk$set(echo = TRUE,      
+                      warnings = FALSE,   
+                      messages = FALSE,  
+                      results = TRUE,
+                      comment = NA
+                      )   
+
+```
+
+
+# Introduction
+
+  This report analyzes synthetic breast cancer data in order to explore potential underlying patterns in the data. Starting with exploratory data analysis (EDA) to understand the relationship between the variables and their distribution. The there will be principal component analysis (PCA) in the hopes of reducing th dimensionality and identifying key informative features. Then the clustering method with be applied to group similar observations to potentially identify and possible patterns. Following that local outlier factor (LOF) will be utilized to identify and potential abnormal observations. Once all the models have been assesed and compared a final optimal model will be determined and recommended. 
+
+# Materials 
+
+## Data Set
+
+  According to the World Health Organization (WHO) breast cancer is one of the most common cancers for women worldwide, and is the second leading cause of cancer related deaths in women. This makes identifying breast cancer in women so important because the sooner you start treating a patient the better. 
+
+```{r}
+url ="https://chloewinters79.github.io/STA551/Data/syntheticBreastCancerData.csv"
+cancer = read.csv(url, header = TRUE)
+```
+
+  The data set being used for this assignment is a synthetic breast cancer data set, there are 600 observations in the data set and it consists of 11 variables, 10 of them are numerical and 1 of them is categorical. The 11 variables are detailed below,
+
+1. Sample_No: (num) unique identifier
+2. Thickness_of_Clump: (num) Benign cells are more likely monolayers and malignant or cancerous cells are multilayer
+3. Cell_Size_Uniformity: (num) Benign cells does not vary in size and malignant or cancer cell vary in size
+4. Cell_Shape_Uniformity: (num) Benign cells do not vary in shape, while malignant or cancerous cells vary in shape
+5. Marginal_Adhesion: (num) Benign cells are more likely to stick together, while malignant or cancerous cells are loose or do not stick together
+6. Single_Epithelial_Cell_Size: (num) In benign cases epithelial cells are normal in size, while in malignant or cancerous cases they are significantly enlarged
+7. Bare_Nuclei: (num) In benign cases the bare nuclei are not surrounded by cytoplasm, while in malignant or cancerous cases they are surrounded by cytoplasm
+8. Bland_Chromatin: (num) Benign cells have uniform or fine chromatin, while malignant or cancerous cells have coarse chromatin
+9. Normal_Nucleoli: (num) In benign cases nucleoli are very small, while in malignant or cancerous cases nucleoli are more prominent
+10. Mitoses: (num) In benign cases cell growth is normal, while in malignant or cancerous cases there is abnormal cell growth
+11. Outcome: (cat) "No" denotes benign breast cancer, "Yes" denotes malignant breast cancer
+
+It should be noted that while numeric, variables 2 - 10 are integers from 1-10.
+
+## Exploratory Data Analysis
+
+  First we are going to look at the summary information of the data set. Looking at the variables most of their means seem to be in the 3-5 range, with Mitoses having the lowest mean at 2.093, and Thickness_of_Clump having the largest mean at 5.41. There does seem to be some indication of right skewness with a majority of the variables, however, we will wait to look at some visual representation before making any final conclusions. A table for the categorical variable outcome was also created, there are 380 No observations, which are observations where the cancer was benign and 220 Yes observations, where the cancer was malignant. The class imbalance does not appear to heavily bias the dataset. 
+
+```{r}
+summary(cancer)
+table(cancer$Outcome)
+```
+  
+  Moving onto a visual analysis of the variables, histograms were created for the following variables, Thickness_of_Clump, Cell_Size_Uniformity, Cell_Shape_Uniformity, Marginal_Adhesion, Single_Epithelial_Cell_Size, Bare_Nuclei, Bland_Chromatin, Normal_Nucleoli, and Mitosis. Looking at the output none of the variables appear to have a normal distribution. With the exception of the Thickness_of_Clump variable having a potential uniform distribution, all the other variables have a right skewness, with the variable Mitoses having the most severe skewness. The variables Normal_Nucleoli, Bare_Nuclei, Cell_Shape_Uniformity, Cell_Size_Uniformity, and Marginal_Adhesions having slightly less severe right skewness than Mitosis, but more severe than Single_Epithelial_Cell_Size and Bland_Chromatin, which while the least severe, are still clearly exhibiting a right skewness. 
+
+
+```{r}
+
+par(mfrow = c(2,2))
+
+hist(cancer$Thickness_of_Clump, main = "Distribution of Clump Thickness")
+hist(cancer$Cell_Size_Uniformity, main = "Distribution of Cell Size Uniformity")
+hist(cancer$Cell_Shape_Uniformity, main = "Distribution of Cell Shape Uniformity")
+
+hist(cancer$Marginal_Adhesion, main = "Distribution of Marginal Adhesion")
+hist(cancer$Single_Epithelial_Cell_Size, main = "Distribution of Single Epithelial Cell Size")
+hist(cancer$Bare_Nuclei, main = "Distribution of Bare Nuclei")
+
+hist(cancer$Bland_Chromatin, main = "Distribution of Bland Chromatin")
+hist(cancer$Normal_Nucleoli, main = "Distribution of Normal Nucleoli")
+hist(cancer$Mitoses, main = "Distribution of Mitoses")
+```
+  Next box plots were created to look at the relationship between the numerical variables and the outcome variable. Looking at the output it appears that for all the variables the "No" outcome was consistent with the right skewness seen in the histograms above. When looking at the output for all the variables with the "Yes" outcome with the exception of the Mitoses variable all the "Yes" outcomes are showing a left skewness, the Mitoses variable shows right skewness. None of the boxplots show a normal distribution, all boxplots show either right or left skewness. 
+
+```{r}
+
+# Make individual plots
+p1 <- ggplot(cancer, aes(x = Outcome, y = Thickness_of_Clump, fill = Outcome)) +
+  geom_boxplot(alpha = 0.7) +
+  labs(title = "Clump Thickness by Outcome", y = "Clump Thickness") +
+  theme_minimal()
+
+p2 <- ggplot(cancer, aes(x = Outcome, y = Cell_Size_Uniformity, fill = Outcome)) +
+  geom_boxplot(alpha = 0.7) +
+  labs(title = "Cell Size Uniformity by Outcome", y = "Cell Size Uniformity") +
+  theme_minimal()
+
+p3 <- ggplot(cancer, aes(x = Outcome, y = Cell_Shape_Uniformity, fill = Outcome)) +
+  geom_boxplot(alpha = 0.7) +
+  labs(title = "Cell Shape Uniformity by Outcome", y = "Cell Shape Uniformity") +
+  theme_minimal()
+
+p4 <- ggplot(cancer, aes(x = Outcome, y = Marginal_Adhesion, fill = Outcome)) +
+  geom_boxplot(alpha = 0.7) +
+  labs(title = "Marginal Adhesion by Outcome", y = "Marginal Adhesion") +
+  theme_minimal()
+
+p5 <- ggplot(cancer, aes(x = Outcome, y = Single_Epithelial_Cell_Size, fill = Outcome)) +
+  geom_boxplot(alpha = 0.7) +
+  labs(title = "Single Epithelial Cell Size by Outcome", y = "Single Epithelial Cell Size") +
+  theme_minimal()
+
+p6 <- ggplot(cancer, aes(x = Outcome, y = Bare_Nuclei, fill = Outcome)) +
+  geom_boxplot(alpha = 0.7) +
+  labs(title = "Bare Nuclei by Outcome", y = "Bare Nuclei") +
+  theme_minimal()
+
+p7 <- ggplot(cancer, aes(x = Outcome, y = Bland_Chromatin, fill = Outcome)) +
+  geom_boxplot(alpha = 0.7) +
+  labs(title = "Bland Chromatin by Outcome", y = "Bland Chromatin") +
+  theme_minimal()
+
+p8 <- ggplot(cancer, aes(x = Outcome, y = Normal_Nucleoli, fill = Outcome)) +
+  geom_boxplot(alpha = 0.7) +
+  labs(title = "Normal Nucleoli by Outcome", y = "Normal Nucleoli") +
+  theme_minimal()
+
+p9 <- ggplot(cancer, aes(x = Outcome, y = Mitoses, fill = Outcome)) +
+  geom_boxplot(alpha = 0.7) +
+  labs(title = "Mitoses by Outcome", y = "Mitoses") +
+  theme_minimal()
+
+# Arrange into pages (2x2 layout per page)
+grid.arrange(p1, p2, p3, p4, ncol = 2)   # Page 1
+grid.arrange(p5, p6, p7, p8, ncol = 2)   # Page 2
+grid.arrange(p9, ncol = 1)               # Page 3
+
+
+```
+  Considering that all the numerical variables are integers between 1-10 a traditional pairwise graph does not make sense because it would be quite cluttered and correlation is harder to determine in those kinds of plots when the data is not continuous. To ensure we are still able to look at the correlation between variables, it made sense to do a correlation heat map to analyze the relationship between the numerical variables. Cell_Size_Uniformity and Cell_Shape_Uniformity are the most highly correlated variables with a correlation of 0.84, which is considered a strong correlation. Considering both these variables deal with a type of cell uniformity it does make sense that they would be highly correlated. There are also 16 pairings in the 0.60 - 0.71 range which would be considered strong correlation. Additionally, only 4 pairing are under 0.40 which anything under 0.40 would either be considered weak or very weak, no correlation. Since this assignment is going to be covering Principal Component Analysis (PCA) and Clustering having data with mid to high levels of variable correlation is actually ideal. Since we now know we are working with several numerical variables that are highly correlated we can move into the PCA and Clustering aspects of this assignment. 
+
+```{r}
+# Pearson correlation matrix
+corr_mat_pearson <- cor(cancer[ ,2:10], method = "pearson")
+
+# Pearson correlation heatmap
+ggcorrplot(corr_mat_pearson, 
+           hc.order = TRUE,
+           type = "lower",
+           lab = TRUE,
+           lab_size = 3,
+           method = "square",
+           colors = c("blue", "white", "red"),
+           title = "Pearson Correlation Heatmap of Predictors",
+           ggtheme = theme_minimal)
+```
+
+
+# Methodolgy & Analysis 
+
+  This assignment is going to be looking at breast cancer data using principal component analysis and two clustering techniques, k-means and hierarchical. The goal is to help address the multicollinearity seen in the EDA and identify groupings within the data that correlate to patterns in the diagnosis of the tumors. In the end there will hopefully be models to help better understand the patterns in diagnosing these tumors so malignant tumors can be properly identified and treated. 
+
+
+## Principal Component Analysis 
+
+  A main goal of utilizing principal component analysis is reducing that variable correlation and addressing the multicollinearity we are currently seeing. This happens by transforming the data. In this case we will be undergoing a variable scanning process for all variables besides the ID variable and our outcome variable. After the transformation the PCA will be run on the data and summarized. The PCA run on the data will created a number of new variables based on information from our original variables. Then the decision will be made on how many principal components should be kept for our final analysis.
+
+```{r}
+# Principal Component Analysis
+
+
+# Remove ID and categorical outcome variable
+cancer_num <- cancer[, 2:10]
+
+# Scale numeric variables
+cancer_scaled <- scale(cancer_num)
+
+# Run PCA
+pca_model <- prcomp(cancer_scaled, center = TRUE, scale. = TRUE)
+
+# Summary of PCA
+summary(pca_model)
+
+# Scree plot showing % variance explained
+library(factoextra)
+fviz_eig(pca_model, addlabels = TRUE, ylim = c(0, 60))
+
+# PCA biplot colored by cancer outcome
+fviz_pca_biplot(pca_model,
+                geom.ind = "point",
+                col.ind = cancer$Outcome, 
+                palette = c("#00AFBB", "#FC4E07"),
+                addEllipses = TRUE,
+                label = "var",
+                col.var = "black",
+                title = "PCA Biplot Colored by Outcome")
+
+# Loadings (to interpret variable contributions)
+pca_model$rotation
+
+
+
+```
+  Looking at the output from the PCA there are several conclusions to be made. As to be expected in PCA the first principal component explains a majority of the data with it explaining 62% of the variance. Then moving onto the second principal component it explains 8.706% of the variance for a cumulative total of 70.705% and this gradually increases until the 9th and final principal component is reached. There is also information on how these principal components relate back to the original variables. The first principal component has negative loading for the variables cell size uniformity, cell shape uniformity, bare nuclei, and normal nucleoli. This indicates that this principal component is representative of the variables dealing will cell abnormality and that as those variables increase so does the likelihood of the tumors malignancy. Looking at the second principal component it seems to be mainly representative of the variable mitosis which is associated with the cells division. So the two principal components are representing different aspects of the cells. Considering all this information at this time it seems only utilizing the first two principal components makes the most sense. 
+  
+
+#### PCA Classification Models
+
+```{r}
+cancer$Outcome01 <- ifelse(cancer$Outcome == "Yes", 1, 0)
+set.seed(123)
+idx <- createDataPartition(cancer$Outcome01, p=0.75, list=FALSE)
+train <- cancer[idx, ]
+test <- cancer[-idx, ]
+
+```
+
+A logistic regression model using the first two principal components, PC1 and PC2 was fit to the training data set. The model showed that the first principal component PC1 was a significant predictor with p < 2e-16 which means we fail to reject the null at the 0.05 alpha level. However the second principal component PC2 was not significant with a p-value of 0.976. This indicated that a majority of the separation between the malignant and benign tumors is done with the first principal component. The model was evaluated on the testing subset of the data set and it had a high AUC of 0.9885. This shows that the PCA features do not negatively impact the predictive accuracy of the model. 
+
+```{r}
+
+# Use the same scaled data used for PCA
+pca_model <- prcomp(cancer_scaled, center=TRUE, scale.=TRUE)
+
+# Keep first two PCs (adjust number if you prefer)
+train_pca <- data.frame(
+  Outcome01 = train$Outcome01,
+  predict(pca_model, newdata=train)[, 1:2]
+)
+
+test_pca <- data.frame(
+  Outcome01 = test$Outcome01,
+  predict(pca_model, newdata=test)[, 1:2]
+)
+
+# Logistic Regression with PCA Features
+logit_pca <- glm(Outcome01 ~ PC1 + PC2, data=train_pca, family=binomial)
+
+summary(logit_pca)
+
+pca_probs <- predict(logit_pca, newdata=test_pca, type="response")
+roc_pca <- roc(test_pca$Outcome01, pca_probs)
+roc_pca$auc
+
+
+```
+
+
+The random forest model was also built utilizing the first two principal components PC1 and PC2. This model was very strong in terms of predictive performance. The overall accuracy is 95.33%, meaning a majority of the observations in the test date were properly classified. The sensitivity was 1 which means 100% of the malignant observations were properly classified, which considering the real life context of this data, is amazing. The specificity is a little lower but still very high overall at 0.9307. This means 93.07% of the benign observations were correctly classified. Overall, the random forest had incredibly strong results. The model had an AUC of 0.9797 which is only slightly lower than the logistic model. However both models are very strong and are do a great job of properly classifying observations. 
+
+```{r}
+
+# Random Forest with PCA Features
+set.seed(123)
+
+rf_pca <- randomForest(
+  factor(Outcome01) ~ PC1 + PC2,
+  data=train_pca,
+  ntree=300
+)
+
+rf_pca_probs <- predict(rf_pca, newdata=test_pca, type="prob")[,2]
+rf_pca_pred  <- predict(rf_pca, newdata=test_pca, type="class")
+
+confusionMatrix(rf_pca_pred, factor(test_pca$Outcome01), positive="1")
+
+roc_rf_pca <- roc(test_pca$Outcome01, rf_pca_probs)
+roc_rf_pca$auc
+
+
+```
+Both the PCA logistic and PCA random forest methods achieve high AUCs showing that they are not negatively impacting the predictive performance. It should be noted that only two PCs were utilized in this analysis. There were 9 PCs and it was my personal decision to use 2 as the optimal amount of PCs for this analysis on this data set. Someone could disagree with the optimal amount of PCs and rerun this analysis with a differnt amount and discover different results. 
+
+
+## Clustering 
+
+  K-Means and Hierarchical Clustering methods are two methods of unsupervised learning that help identify natural groupings in data. The k-means method focuses on partitioning the data into (k) number of clusters. In this analysis there will be the plotting of a chart known as the "elbow method" that will help advise the optimal number of (k) clusters. After the optimal number of clusters have been determine a graph of the data will be showcased showing the data divided into those clusters. Moving on to the hierarchical clustering this is almost reminiscent of decision tree modeling. This process created nested trees called dendograms and groups together data based on their similarities. Despite both being clustering methods the have differences that make them unique and both beneficial so both methods will be used in the analysis for this assignment. 
+
+
+```{r}
+
+# K-Means Clustering
+
+
+# Determine optimal number of clusters (elbow method)
+fviz_nbclust(cancer_scaled, kmeans, method = "wss") +
+  geom_vline(xintercept = 2, linetype = 2) +
+  labs(title = "Elbow Method for Optimal k")
+
+# Run K-means with k = 2
+set.seed(123)
+kmeans_result <- kmeans(cancer_scaled, centers = 2, nstart = 25)
+
+# Visualize K-means clusters
+fviz_cluster(kmeans_result, data = cancer_scaled,
+             palette = c("#2E9FDF", "#FC4E07"),
+             ellipse.type = "norm",
+             geom = "point",
+             ggtheme = theme_minimal(),
+             main = "K-Means Clustering (k = 2)")
+
+# Compare K-means clusters with true Outcome
+table(kmeans_result$cluster, cancer$Outcome)
+```
+  Starting with the output from the k-means clustering analysis, the "elbow method" recommends a cutoff at 2 clusters or k=2. Using this cutoff a clustering graph is created where blue is all the data in the first cluster and 2 is all the data in the second cluster. Looking at this graph it is clear the first cluster is wider and larger and captures more spread out data while cluster 2 is smaller and narrower and captures data points that are almost on top of each other. There is also output that indicates how many malignant and non malignant cases were put into each cluster. Cluster 1 has 207 malignant cases and 12 benign cases while in cluster 2 there are 386 benign cases and 13 malignant cases. This shows that the clusters are effectively capturing the separation between the malignant and benign tumors. While there are a few misclassifications considering this is only a 2 cluster method a few misclassifications are to be expected. Overall a majority of the observations are properly classified indicating a strong k-means clustering analysis. 
+
+
+```{r}
+# Hierarchical Clustering
+
+# Compute distance matrix
+dist_mat <- dist(cancer_scaled, method = "euclidean")
+
+# Perform hierarchical clustering
+hc <- hclust(dist_mat, method = "ward.D2")
+
+# Plot dendrogram
+# Hierarchical Clustering 
+
+# Convert scaled data to data frame
+scales.hierarch <- as.data.frame(cancer_scaled)
+
+# Compute distance matrix using Euclidean distance
+distance <- dist(scales.hierarch, method = "euclidean")
+
+# Perform hierarchical clustering using Complete Linkage
+hc1 <- hclust(distance, method = "complete")
+
+# Basic dendrogram with rectangles
+plot(hc1,
+     cex = 0.6,
+     labels = FALSE,
+     hang = -1,
+     xlab = "",
+     main = "Dendrogram: Hierarchical Clustering (Complete Linkage)")
+
+# Draw rectangles for 2 clusters (you can change to 5 if desired)
+rect.hclust(hc1, k = 2, border = c("#00AFBB", "#FC4E07"))
+
+
+hc_clusters <- cutree(hc, k = 2)
+
+
+# Compare hierarchical clusters to true Outcome
+table(hc_clusters, cancer$Outcome)
+
+
+```
+
+  Similar to the results in the k-means clustering output the hierarchical clustering also utilizes two groups. However, there is a switch in this cluster compared to the k-means. Instead of the malignant tumors being mainly captured in the first cluster we see the benign tumors being captured in this cluster. The first cluster has 358 benign cases and 5 malignant, while the second cluster has 22 benign cases and 215 malignant cases. Again, there is some misclassification but overall the amount of misclassification is not concerning considering the size of the data set. Overall, this hierarchical clustering model seems to be very strong just like the k-means model. 
+
+#### Clustering Classification Models
+
+A logistic model using the K-means clustering method was created. The predictive performance was strong, indicating the two clusters have captured a significant separation between malignant and benign observations. The coefficient ClusterK22 is highly significant with a p-value < 2e-16 which means we would reject the null at the 0.05 alpha level. This is indicative of cluster two having significantly lower odds of being malignant compared to cluster one. Essentially this means most malignant observations are most in cluster one while the majority of benign observations are in cluster 2. The model also has a strong AUC at 0.9446 which is incredibly good. This means without the original data set variables the cluster alone provides significant differntiation of the two observation types, indicating a meaningful pattern, 
+
+
+```{r}
+
+set.seed(123)
+kmeans_model <- kmeans(cancer_scaled, centers=2, nstart=25)
+
+# Add cluster labels
+cancer$ClusterK2 <- factor(kmeans_model$cluster)
+
+# Align train/test splits
+train$ClusterK2 <- cancer$ClusterK2[idx]
+test$ClusterK2  <- cancer$ClusterK2[-idx]
+
+# Logistic Regression using Cluster Label
+logit_cluster <- glm(Outcome01 ~ ClusterK2, data=train, family=binomial)
+
+summary(logit_cluster)
+
+cluster_probs <- predict(logit_cluster, newdata=test, type="response")
+roc_cluster <- roc(test$Outcome01, cluster_probs)
+roc_cluster$auc
+
+
+```
+
+
+Now looking at the random forest trained with the cluster it shows a similarly strong performance. The random forest for clustering has a sensitivity of 0.9388 which means it correctly classifies 93.88% of the malignant observations. Similarly the specificity is 0.9505 which means it correctly classifies 95.05% of the benign cases. This model has the same AUC as the logistic model with 0.9446, again still a very strong AUC. While not as strong as the full model with all the predictors, for only having one feature this model has incredibly strong predictive power and produces meaningful results.
+
+```{r}
+
+# Random Forest with Clustering Feature
+set.seed(123)
+
+rf_cluster <- randomForest(
+  factor(Outcome01) ~ ClusterK2,
+  data=train,
+  ntree=300
+)
+
+rf_cluster_probs <- predict(rf_cluster, newdata=test, type="prob")[,2]
+rf_cluster_pred <- predict(rf_cluster, newdata=test, type="class")
+
+confusionMatrix(rf_cluster_pred, factor(test$Outcome01), positive="1")
+
+roc_rf_cluster <- roc(test$Outcome01, rf_cluster_probs)
+roc_rf_cluster$auc
+
+
+```
+
+
+## LOF
+
+  Local Outlier Factor, also known as LOF is a method used to identify anomalies in the data set. This is done by comparing the densities of local data points and if the density of a data point is significantly lower than the data points aware it the point is flagged as an outlier. In order to begin this process a second version of the outcome variable is going to be created. In the original data set the outcome variable is a character variable listed as "Yes" or "No" but in order to utilize the LOF method the all the variables being utilized need to be numeric. The outcome variable will be converted to numeric where 0 = "No" and 1 = "Yes". Then all the numeric variables are going to be scaled because LOF utilized Euclidean distances so if the variables were unscaled the variables with larger ranges would dominate the computation. 
+
+```{r}
+
+# Convert Outcome to binary numeric: Yes = 1, No = 0
+
+
+
+# Identify numeric variables
+numeric_vars <- cancer %>% select(where(is.numeric))
+
+# Remove the outcome so LOF is purely unsupervised
+numeric_vars <- numeric_vars %>% select(-Outcome01)
+
+# Scale the numeric variables
+numeric_scaled <- scale(numeric_vars)
+
+
+```
+
+
+  Now that all the numerical variables have been scaled it is time to compute the scores. All the observations will be assigned an outlier score based on how isolated it is compared to local data points. The higher the LOF value the more likely it is to be a potentially anomaly. To visualize these potential outliers the LOF histogram was generated. Looking at the histogram most of the LOF scores appear to be under 1.5 with very few scores surpassing that and even fewer surpassing 2 and none of the scores surpassing 3. Looking at LOF a score of 1 or very close to 1 is ideal, and looking at the summary and histogram is seems like a majority of our observations are meeting this criteria which is what we want to see. 
+
+```{r}
+set.seed(123)
+k <- 20  
+
+lof_scores <- lof(numeric_scaled, minPts = k)
+
+
+
+cancer$LOF_k20 <- lof_scores
+
+train <- cancer[idx, ]
+test <- cancer[-idx, ]
+
+
+summary(cancer$LOF_k20)
+
+hist(cancer$LOF_k20[cancer$LOF_k20 < 5],
+     breaks = 40,
+     main = paste("LOF Distribution (k =", k, ")"),
+     xlab = "LOF Score")
+
+
+```
+
+  Moving onto the cutoff analysis, this allows us to determine how effectively the LOF identifies malignant cases as the outlier threshold varies. Looking at the first graph it can be seen that when using the lowest cutoff around 1 the LOF only captures around 40% of the malignant cases, and that only drops dramatically to around 0% as we get closer to a cutoff of 2. The second graph provides similar information, showing a negative improvement ratio. Overall, the LOF scores do not have significantly separate the benign cases from the malignant cases. Meaning the malignant cases are not standing out as outliers in a numeric sense, suggesting LOF may not be beneficial for this data set. However, we are going to continue our analysis cause useful information could come from it to help us make our final conclusion. 
+
+
+```{r}
+# Sequence of LOF cutoffs >1
+cutoffs <- seq(1, 5, length = 21)
+
+lof_rate <- NULL
+
+for (i in 1:length(cutoffs)) {
+  flag <- cancer$LOF_k20 > cutoffs[i]
+  malignant <- cancer$Outcome01[flag]
+  lof_rate[i] <- sum(malignant) / sum(flag)
+}
+
+# Baseline malignant rate
+base_rate <- mean(cancer$Outcome01)
+
+relative_improvement <- (lof_rate - base_rate) / base_rate
+
+par(mfrow=c(1,2))
+
+plot(cutoffs, 100*lof_rate, type="l", lwd=2,
+     main="LOF malignant-catching rate",
+     xlab="LOF cutoff", ylab="Catching rate (%)")
+
+plot(cutoffs, relative_improvement, type="l", lwd=2,
+     main="Relative improvement vs baseline",
+     xlab="LOF cutoff", ylab="Improvement ratio")
+
+
+
+```
+
+  In order to evaluate LOF as a detection tool the ROC curve was generated along with AUC scores. Unfortunately looking at the first graph for LOF Detection, the AUC is 0.5923, considering that an AUC of 0.50 is representative of essentially random guessing a 0.5923 AUC is not that strong. This supports the LOF cutoff results of this possibly not being the best methodology for this data set. When looking at the different potential k-cutoffs there is some improvement, has k increase so does the AUC going from 0.5492 when k=10 to 0.6758 when k=60. Overall, the results are indicating that LOF is not right for this data. 
+
+```{r}
+
+category <- as.character(cancer$Outcome01)
+
+roc_lof <- roc(category, cancer$LOF_k20, levels=c("1","0"), direction=">")
+
+plot(1-roc_lof$specificities, roc_lof$sensitivities, type="l",
+     main="ROC Curve: LOF Detection",
+     xlab="1 - Specificity", ylab="Sensitivity")
+segments(0,0,1,1, lty=2, col="red")
+
+text(0.8, 0.2, paste("AUC =", round(roc_lof$auc, 4)), col="darkred")
+
+
+k_list <- c(10, 20, 40, 60)
+
+lof_list <- lapply(k_list, function(k) lof(numeric_scaled, minPts=k))
+
+roc_list <- lapply(lof_list, function(x) roc(category, x,
+                                            levels=c("1","0"), direction=">"))
+
+
+colors <- c("darkred", "navy", "purple", "darkgreen")
+
+plot(1-roc_list[[1]]$specificities, roc_list[[1]]$sensitivities, type="l",
+     col=colors[1], lwd=2,
+     xlab="1 - specificity", ylab="sensitivity",
+     main="ROC Comparison for Different k")
+
+for (i in 2:length(k_list)) {
+  lines(1-roc_list[[i]]$specificities, roc_list[[i]]$sensitivities,
+        col=colors[i], lwd=2)
+}
+
+legend("bottomright",
+       legend=paste("k =", k_list,
+                    "AUC=", round(sapply(roc_list, function(x) x$auc), 4)),
+       col=colors, lwd=2, cex=0.8, bty="n")
+
+
+```
+
+
+
+### Binary Classification Models
+
+  Despite the LOF results indicating it may not be the best methodology to use on this data set the project is still going to be continued as intended. A binary classification model is going to be utilized to see if pairing LOF with a predictive model is beneficial. Before building this model the data is going to be split into training and testing subsets so the final model can be tested. 
+
+  The project asks for a binary classification model to be trained without any feature engineering, then train them with feature engineering and compare the results. First we are going to start with the binary logistic regression without any feature engineering, in this case without LOF. Then we are going to also run the model with LOF so the results can be compared. Starting with the model that did not utilize LOF there are several significant variables those being, thickness of clump, cell shape and cell size uniformity, and bare nucleic. The model also had a strong performance with an AUC of 0.9867, which is extremely strong. However, when using the logistic regression model that only utilizes LOF the results were drastically different. The variable LOF_k20 was not statistically significant with a p-value of 0.744, which does not come close to a alpha of 0.05 threshold. This LOF model also has an AUC  of 0.6228, a significant drop from the other model. This further confirms previous findings of LOF not being beneficial for this data. 
+
+
+```{r}
+
+# No LOF
+
+baseline_logit <- glm(
+  Outcome01 ~ Thickness_of_Clump + Cell_Size_Uniformity + Cell_Shape_Uniformity + 
+    Marginal_Adhesion + Single_Epithelial_Cell_Size + Bare_Nuclei +
+    Bland_Chromatin + Normal_Nucleoli + Mitoses,
+  data=train, family=binomial
+)
+
+summary(baseline_logit)
+baseline_probs <- predict(baseline_logit, newdata=test, type="response")
+roc_baseline <- roc(test$Outcome01, baseline_probs)
+roc_baseline$auc
+
+
+# LOF
+
+
+logit_fit <- glm(Outcome01 ~ LOF_k20, data=train, family=binomial)
+
+summary(logit_fit)
+
+logit_probs <- predict(logit_fit, newdata=test, type="response")
+logit_pred <- ifelse(logit_probs > 0.5, 1, 0)
+
+confusionMatrix(factor(logit_pred), factor(test$Outcome01), positive="1")
+roc_logit <- roc(test$Outcome01, logit_probs)
+
+plot(roc_logit, main="Logistic Regression with LOF")
+roc_logit$auc
+
+
+
+```
+
+  Moving onto the random forest model there will also be two versions, one that does not utilize LOF and one that utilizes LOF. Starting with the results from the non LOF model the AUC is 0.9823, which is even better than the logistic model. This model also has a sensitivity of 1, for malignant detection, which means it is correctly detecting the malignant observations every time which is incredible. This is paired with a specificity of 0.96 which means the model correctly detects benign observations 96% of the time. Both of these results are great to see in a model. Switching to the LOF random forest presents a different story. The AUC for this model is only 0.556, which as discussed as before is very weak. Additionally this is paired with a sensitivity of 0.367 which means malignant observations are only being correctly identifies 36.7% of the time. Looking at specificity this is slightly better at 0.713 meaning benign observations are correctly identified 71.3% of the time. While better than the sensitivity, this is lower than the specificity in the non LOF model. 
+
+
+```{r}
+# Not LOF
+set.seed(123)
+
+rf_base <- randomForest(
+  factor(Outcome01) ~ Thickness_of_Clump + Cell_Size_Uniformity +
+    Cell_Shape_Uniformity + Marginal_Adhesion +
+    Single_Epithelial_Cell_Size + Bare_Nuclei +
+    Bland_Chromatin + Normal_Nucleoli + Mitoses,
+  data=train,
+  ntree=300,
+  importance=TRUE
+)
+
+rf_base_probs <- predict(rf_base, newdata=test, type="prob")[,2]
+rf_base_pred  <- predict(rf_base, newdata=test, type="class")
+
+confusionMatrix(rf_base_pred, factor(test$Outcome01), positive="1")
+
+roc_rf_base <- roc(test$Outcome01, rf_base_probs)
+roc_rf_base$auc
+
+# LOF
+set.seed(123)
+
+rf_fit <- randomForest(
+  factor(Outcome01) ~ LOF_k20,
+  data=train,
+  ntree=300,
+  importance=TRUE
+)
+
+rf_probs <- predict(rf_fit, newdata=test, type="prob")[,2]
+rf_pred  <- predict(rf_fit, newdata=test, type="class")
+
+confusionMatrix(rf_pred, factor(test$Outcome01), positive="1")
+
+roc_rf <- roc(test$Outcome01, rf_probs)
+plot(roc_rf, main="Random Forest with LOF")
+roc_rf$auc
+
+
+```
+
+
+# Results & Conclusions
+
+  This project showcases a strong distinction between the benign and malignant tumors in this data set. The PCA analysis that was utilized did a good job of reducing the dimensionality in the data set. Both the classification models were incredibly strong and showed good specificity and sensitivity. The results from the k-means and clustering showcased clear grouping in the data corresponding to tumor outcome status, meaning these numerical measurement indicating a natural separation between the tumor types. The clustering classifications were also incredibly strong especially considering it was one factor. However, in comparison to the PCA classification models they were overall slightly weaker. Indicating that between the two the PCA method should be the recommendation for this specific data set. 
+  
+  When using the LOF methodology it unfortunately was not as effective for this data. While LOF is an incredibly useful tool, it is only useful in certain scenarios with certain data sets and this data set was just not meant to benefit from LOF. The malignant tumors do not appear as outliers in the data set causing the LOFs to have low AUCs and poor sensitivities. The supervised models, being logistic and random forest were very strong. With the random forest being slightly stronger and being a great recommendation for a final model in determining whether or not a tumor is benign or malignant. Especially with a sensitivity of 1, this means patients with malignant tumors would never be misdiagnosed which is incredibly beneficial and life saving. Overall, despite the unfortunate results of LOF not being beneficial, the rest of results provided great results for predicting the whether or not a tumor is benign or malignant, which is the true goal of this project. 
+
+
+
+
+
