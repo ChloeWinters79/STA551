@@ -1,0 +1,168 @@
+/*
+Custom CSS template for ioslides
+Edits requested:
+- Regular slides: #a54657 background, black text
+- Transition slides: #582630 background, #fee9d6 text
+- Title slide matches transition slide and polished layout
+*/
+
+/* Import google fonts */
+@import url('https://fonts.googleapis.com/css?family=Lora|Open+Sans&display=swap');
+
+/* -----------------------------------
+   BASE SLIDE STYLES
+----------------------------------- */
+
+/* Regular slides */
+slides > slide {
+  background-color: #a54657 !important;
+  font-family: 'Source Sans Pro', sans-serif;
+  overflow: scroll;
+}
+
+/* Regular slide text */
+slides > slide > article {
+  color: black !important;
+  font-weight: 300;
+}
+
+/* -----------------------------------
+   TRANSITION SLIDES (.dark)
+----------------------------------- */
+slides > slide.dark {
+  background-color: #582630 !important;
+}
+
+/* Transition slide text color */
+slides > slide.dark > article,
+slides > slide.dark h1,
+slides > slide.dark h2,
+slides > slide.dark p,
+slides > slide.dark li {
+  color: #fee9d6 !important;
+}
+
+
+/* -----------------------------------
+   TITLE SLIDE (styled like transition slide)
+----------------------------------- */
+slides > slide.title-slide {
+  background-color: #582630 !important;
+  text-align: center;
+  padding-top: 15%;
+}
+
+/* Title text */
+slides > slide.title-slide h1 {
+  color: #fee9d6 !important;
+  font-size: 3em;
+  font-weight: 700;
+  margin-bottom: 15px;
+  border-bottom: 3px solid #fee9d6;
+  display: inline-block;
+  padding-bottom: 5px;
+}
+
+/* Subtitle (optional h2 or h3) */
+slides > slide.title-slide h2,
+slides > slide.title-slide h3 {
+  color: #fee9d6 !important;
+  margin-top: 10px;
+  font-size: 1.6em;
+  font-weight: 300;
+}
+
+/* Author + date */
+slides > slide.title-slide p {
+  color: #fee9d6 !important;
+  font-size: 1.2em;
+  margin-top: 20px;
+  opacity: 0.9;
+}
+
+
+/* -----------------------------------
+   HEADERS ON REGULAR SLIDES
+----------------------------------- */
+h1, h2 {
+  color: #003f5c !important;
+}
+
+/* Section underline (kept simple for regular slides) */
+.auto-fadein {
+  width: 70%;
+}
+.auto-fadein > h1,
+.auto-fadein > h2 {
+  border-bottom: 2px solid grey;
+  padding-bottom: 10px;
+}
+
+
+/* -----------------------------------
+   CITATIONS
+----------------------------------- */
+.cite { color: #2b7ddf; }
+
+
+/* -----------------------------------
+   IMAGES
+----------------------------------- */
+img {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  margin-bottom: 25px;
+  max-width: 100%;
+}
+
+
+/* -----------------------------------
+   LIST STYLES
+----------------------------------- */
+ul > li { list-style-type: disc; }
+ul > li > ul > li { list-style-type: circle; }
+
+
+/* -----------------------------------
+   CODE BLOCKS
+----------------------------------- */
+pre {
+  width: auto !important;
+  padding: 10px 20px !important;
+  border-radius: 5px !important;
+  border: thin solid #adb5bd !important;
+}
+pre.prettyprint { background-color: #f8f8f8 !important; }
+
+
+/* -----------------------------------
+   TABLE STYLING
+----------------------------------- */
+table.rmdtable {
+  margin: 0 auto 25px !important;
+  border-spacing: 0 !important;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+}
+
+table.rmdtable th {
+  background-color: #003f5c !important;
+  padding: 10px;
+  text-align: center !important;
+}
+
+table.rmdtable td, table th {
+  padding: 1em !important;
+}
+
+/* Rounded corners */
+table.rmdtable th:first-child { border-radius: 5px 0 0 0; }
+table.rmdtable th:last-child { border-radius: 0 5px 0 0; }
+table.rmdtable tr:last-child td:first-child { border-radius: 0 0 0 5px; }
+table.rmdtable tr:last-child td:last-child { border-radius: 0 0 5px 0; }
+
+/* Hover effect */
+table.rmdtable > tbody > tr:hover > td,
+table.rmdtable > tbody > tr:hover > th {
+  background-color: #e5e5e5;
+}
