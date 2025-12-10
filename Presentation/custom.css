@@ -1,94 +1,129 @@
-/* ---------- GLOBAL BASE ---------- */
-body, .slide {
-  font-family: "Helvetica", sans-serif;
-  background-color: #feebda !important;
-  color: #59262f;
+/* -------------------------------------------
+   Custom Slidy Presentation Theme
+   Based on ioslides template you provided
+   Palette: #a54657, #59262f, #feebda
+--------------------------------------------*/
+
+/* Import Google Fonts */
+@import url('https://fonts.googleapis.com/css?family=Lora|Open+Sans&display=swap');
+
+/* GLOBAL SLIDE FONT & BASE STYLE */
+.slide {
+  font-family: 'Open Sans', sans-serif;
+  background-color: #feebda !important; /* default cream */
+  color: #59262f;                       /* default text */
+  padding: 40px;
 }
 
-/* Headings default on light slides */
-h1, h2, h3 {
-  color: #59262f;
-  font-weight: 700;
-}
-
-/* ---------- TITLE SLIDE ---------- */
+/* -------------------------------------------
+   TITLE SLIDE STYLING
+--------------------------------------------*/
 .title-slide {
-  background-color: #59262f !important;
-  color: #feebda !important;
-  text-align: center;
-}
-
-.title-slide h1, 
-.title-slide h2, 
-.title-slide h3,
-.title-slide .author,
-.title-slide .date {
-  color: #feebda !important;
-}
-
-/* ---------- REGULAR SLIDES ---------- */
-.slide:not(.title-slide):not(.dark) {
-  background-color: #feebda !important;
-  color: #59262f !important;
-}
-
-/* optional soft card feel */
-.slide:not(.dark) p,
-.slide:not(.dark) ul,
-.slide:not(.dark) ol {
-  font-size: 1.15em;
-  padding: 10px 0;
-}
-
-/* ---------- SECTION / TRANSITION SLIDES (centered) ---------- */
-.dark {
-  background-color: #a54657 !important;
-  color: #feebda !important;
+  background-color: #59262f !important; /* deep burgundy */
+  color: #feebda !important;            /* cream text */
   
-  /* full centering layout */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+
+  font-family: 'Lora', serif;
+  font-size: 1.5em;
+}
+
+.title-slide h1,
+.title-slide h2,
+.title-slide h3 {
+  color: #feebda !important;
+  border-bottom: 3px solid #feebda;
+  padding-bottom: 10px;
+  width: 60%;
+}
+
+/* -------------------------------------------
+   SECTION / TRANSITION SLIDES
+   (using .dark class in Rmd)
+--------------------------------------------*/
+.dark {
+  background-color: #a54657 !important; /* rose */
+  color: #feebda !important;
+
+  /* center formatting to mimic ioslides transition feel */
   display: flex !important;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   text-align: center;
 
-  padding: 60px;                 /* breathing room */
-  min-height: 100vh !important;  /* ensure full screen */
+  font-family: 'Lora', serif;
 }
 
-/* Heading style on transitions */
-.dark h1, .dark h2, .dark h3 {
+.dark h1,.dark h2,.dark h3 {
   color: #feebda !important;
-  margin-top: 0;
-  font-size: 2.2em;
-  font-weight: 700;
+  border-bottom: 3px solid #feebda;
+  padding-bottom: 10px;
+  width: 60%;
 }
 
-/* Center lists and paragraphs */
-.dark p, .dark ul, .dark ol {
-  font-size: 1.3em;
-  max-width: 70%;
-  margin-left: auto;
-  margin-right: auto;
+/* -------------------------------------------
+   REGULAR SLIDES (default)
+--------------------------------------------*/
+.slide:not(.title-slide):not(.dark) h1,
+.slide:not(.title-slide):not(.dark) h2,
+.slide:not(.title-slide):not(.dark) h3 {
+  color: #59262f !important;
+  border-bottom: 2px solid #a54657;
+  padding-bottom: 6px;
+  display: inline-block;
 }
 
-/* optional clean underline accent */
-.dark::after {
-  content: "";
-  margin-top: 25px;
-  width: 45%;
-  height: 6px;
-  background-color: #f9d2bf;
-  border-radius: 4px;
-}
-/* ---------- LINKS & DETAILS ---------- */
-a { color: #7c3a44; font-weight: bold; }
-strong { color: #a54657; }
-
-/* image scaling */
-.slide img {
-  max-width: 85%;
+/* -------------------------------------------
+   IMAGES (centered like original)
+--------------------------------------------*/
+img {
   display: block;
-  margin: 0 auto;
+  margin: 0 auto 25px auto;
+  max-width: 100%;
+}
+
+/* -------------------------------------------
+   LIST STYLING (kept from original)
+--------------------------------------------*/
+ul > li { list-style-type: disc; }
+ul ul > li { list-style-type: circle; }
+
+/* -------------------------------------------
+   CODE BLOCK STYLE (kept, recolored slightly)
+--------------------------------------------*/
+pre {
+  padding: 10px 20px !important;
+  border-radius: 6px;
+  border: 1px solid #59262f;
+  background-color: #f8f8f8 !important;
+}
+
+/* -------------------------------------------
+   TABLE STYLING (color-matched)
+--------------------------------------------*/
+table.rmdtable {
+  margin: 20px auto;
+  border-spacing: 0;
+  box-shadow: 0 0 20px rgba(0,0,0,0.15);
+}
+
+table.rmdtable th {
+  background-color: #59262f !important;
+  color: #feebda !important;
+  text-align: center !important;
+  padding: 10px;
+}
+
+table.rmdtable td, table th {
+  padding: 1em;
+}
+
+table.rmdtable tbody tr:hover td {
+  background-color: #f9d2bf;
 }
 
