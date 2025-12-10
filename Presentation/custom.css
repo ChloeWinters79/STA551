@@ -1,27 +1,33 @@
-/* -------------------------------------------
-   Custom Slidy Presentation Theme
-   Based on ioslides template you provided
-   Palette: #a54657, #59262f, #feebda
---------------------------------------------*/
+/* =========================================================
+   CUSTOM IOSLIDES PRESENTATION THEME
+   Palette:
+   Rose        #a54657
+   Burgundy    #59262f
+   Cream       #feebda
+========================================================= */
 
-/* Import Google Fonts */
-@import url('https://fonts.googleapis.com/css?family=Lora|Open+Sans&display=swap');
+/* -------------------------------
+   GOOGLE FONTS
+------------------------------- */
+@import url('https://fonts.googleapis.com/css?family=Lora:400,700|Open+Sans:400,600&display=swap');
 
-/* GLOBAL SLIDE FONT & BASE STYLE */
+/* -------------------------------
+   GLOBAL SLIDE BASE
+------------------------------- */
 .slide {
   font-family: 'Open Sans', sans-serif;
-  background-color: #feebda !important; /* default cream */
-  color: #59262f;                       /* default text */
-  padding: 40px;
+  background-color: #feebda !important; /* cream */
+  color: #59262f;
+  padding: 40px 60px;
 }
 
-/* -------------------------------------------
-   TITLE SLIDE STYLING
---------------------------------------------*/
+/* -------------------------------
+   TITLE SLIDE
+------------------------------- */
 .title-slide {
-  background-color: #59262f !important; /* deep burgundy */
-  color: #feebda !important;            /* cream text */
-  
+  background-color: #59262f !important; /* burgundy */
+  color: #feebda !important;
+
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -29,83 +35,107 @@
   text-align: center;
 
   font-family: 'Lora', serif;
-  font-size: 1.5em;
 }
 
-.title-slide h1,
+.title-slide h1 {
+  font-size: 3em;
+  margin-bottom: 20px;
+  border-bottom: 3px solid #feebda;
+  padding-bottom: 12px;
+  width: 70%;
+}
+
 .title-slide h2,
 .title-slide h3 {
   color: #feebda !important;
-  border-bottom: 3px solid #feebda;
-  padding-bottom: 10px;
-  width: 60%;
 }
 
-/* -------------------------------------------
+/* -------------------------------
    SECTION / TRANSITION SLIDES
-   (using .dark class in Rmd)
---------------------------------------------*/
+   Use: ## Methods {.dark}
+------------------------------- */
 .dark {
   background-color: #a54657 !important; /* rose */
   color: #feebda !important;
 
-  /* center formatting to mimic ioslides transition feel */
-  display: flex !important;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
+  /* section-slide layout */
+  display: block !important;
+  text-align: left;
+
+  padding: 110px 80px 60px 80px;
 
   font-family: 'Lora', serif;
 }
 
-.dark h1,.dark h2,.dark h3 {
+.dark h1,
+.dark h2 {
   color: #feebda !important;
-  border-bottom: 3px solid #feebda;
-  padding-bottom: 10px;
-  width: 60%;
+  font-size: 2.8em;
+  font-weight: 700;
+
+  border-bottom: 2px solid #feebda;
+  padding-bottom: 12px;
+  margin-bottom: 35px;
+
+  width: 70%;
 }
 
-/* -------------------------------------------
-   REGULAR SLIDES (default)
---------------------------------------------*/
+.dark h3 {
+  color: #feebda !important;
+  font-weight: 400;
+  margin-top: 10px;
+  width: 70%;
+}
+
+/* -------------------------------
+   REGULAR CONTENT SLIDES
+------------------------------- */
 .slide:not(.title-slide):not(.dark) h1,
 .slide:not(.title-slide):not(.dark) h2,
 .slide:not(.title-slide):not(.dark) h3 {
-  color: #59262f !important;
+  color: #59262f;
   border-bottom: 2px solid #a54657;
   padding-bottom: 6px;
   display: inline-block;
 }
 
-/* -------------------------------------------
-   IMAGES (centered like original)
---------------------------------------------*/
+/* -------------------------------
+   PARAGRAPHS & TEXT
+------------------------------- */
+.slide p {
+  line-height: 1.6;
+  max-width: 900px;
+}
+
+/* -------------------------------
+   IMAGES
+------------------------------- */
 img {
   display: block;
   margin: 0 auto 25px auto;
   max-width: 100%;
 }
 
-/* -------------------------------------------
-   LIST STYLING (kept from original)
---------------------------------------------*/
+/* -------------------------------
+   LISTS
+------------------------------- */
 ul > li { list-style-type: disc; }
 ul ul > li { list-style-type: circle; }
 
-/* -------------------------------------------
-   CODE BLOCK STYLE (kept, recolored slightly)
---------------------------------------------*/
+/* -------------------------------
+   CODE BLOCKS
+------------------------------- */
 pre {
-  padding: 10px 20px !important;
+  padding: 12px 18px !important;
   border-radius: 6px;
   border: 1px solid #59262f;
   background-color: #f8f8f8 !important;
+  font-size: 0.9em;
 }
 
-/* -------------------------------------------
-   TABLE STYLING (color-matched)
---------------------------------------------*/
+/* -------------------------------
+   TABLES
+------------------------------- */
 table.rmdtable {
   margin: 20px auto;
   border-spacing: 0;
@@ -119,11 +149,13 @@ table.rmdtable th {
   padding: 10px;
 }
 
-table.rmdtable td, table th {
+table.rmdtable td,
+table.rmdtable th {
   padding: 1em;
 }
 
 table.rmdtable tbody tr:hover td {
   background-color: #f9d2bf;
 }
+
 
