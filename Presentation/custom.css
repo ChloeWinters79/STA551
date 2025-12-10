@@ -1,5 +1,5 @@
 /* =========================================================
-   CUSTOM IOSLIDES PRESENTATION THEME
+   CUSTOM IOSLIDES THEME
    Palette:
    Rose        #a54657
    Burgundy    #59262f
@@ -12,20 +12,20 @@
 @import url('https://fonts.googleapis.com/css?family=Lora:400,700|Open+Sans:400,600&display=swap');
 
 /* -------------------------------
-   GLOBAL SLIDE BASE
+   GLOBAL SLIDES
 ------------------------------- */
 .slide {
   font-family: 'Open Sans', sans-serif;
-  background-color: #feebda !important; /* cream */
+  background-color: #feebda !important;
   color: #59262f;
   padding: 40px 60px;
 }
 
 /* -------------------------------
-   TITLE SLIDE
+   TITLE SLIDE (CENTERED)
 ------------------------------- */
 .title-slide {
-  background-color: #59262f !important; /* burgundy */
+  background-color: #59262f !important;
   color: #feebda !important;
 
   display: flex;
@@ -51,18 +51,19 @@
 }
 
 /* -------------------------------
-   SECTION / TRANSITION SLIDES
-   Use: ## Methods {.dark}
+   TRANSITION / SECTION SLIDES
+   Use: # Methods {.dark}
+   CENTERED (by design)
 ------------------------------- */
 .dark {
-  background-color: #a54657 !important; /* rose */
+  background-color: #a54657 !important;
   color: #feebda !important;
 
-  /* section-slide layout */
-  display: block !important;
-  text-align: left;
-
-  padding: 110px 80px 60px 80px;
+  display: flex !important;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
 
   font-family: 'Lora', serif;
 }
@@ -75,7 +76,7 @@
 
   border-bottom: 2px solid #feebda;
   padding-bottom: 12px;
-  margin-bottom: 35px;
+  margin-bottom: 30px;
 
   width: 70%;
 }
@@ -83,24 +84,32 @@
 .dark h3 {
   color: #feebda !important;
   font-weight: 400;
-  margin-top: 10px;
-  width: 70%;
 }
 
 /* -------------------------------
    REGULAR CONTENT SLIDES
+   White section-slide style
 ------------------------------- */
 .slide:not(.title-slide):not(.dark) h1,
-.slide:not(.title-slide):not(.dark) h2,
-.slide:not(.title-slide):not(.dark) h3 {
+.slide:not(.title-slide):not(.dark) h2 {
+  font-size: 2.2em;
+  font-weight: 700;
   color: #59262f;
+
   border-bottom: 2px solid #a54657;
-  padding-bottom: 6px;
+  padding-bottom: 8px;
+  margin-bottom: 25px;
+
   display: inline-block;
 }
 
+.slide:not(.title-slide):not(.dark) h3 {
+  font-weight: 600;
+  color: #59262f;
+}
+
 /* -------------------------------
-   PARAGRAPHS & TEXT
+   BODY TEXT
 ------------------------------- */
 .slide p {
   line-height: 1.6;
@@ -119,8 +128,13 @@ img {
 /* -------------------------------
    LISTS
 ------------------------------- */
-ul > li { list-style-type: disc; }
-ul ul > li { list-style-type: circle; }
+ul > li {
+  list-style-type: disc;
+}
+
+ul ul > li {
+  list-style-type: circle;
+}
 
 /* -------------------------------
    CODE BLOCKS
