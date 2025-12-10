@@ -1,101 +1,75 @@
-/* -------------------------
-   Slidy Presentation Theme
--------------------------- */
-
-/* Regular slide defaults */
-.slide {
-  background-color: #a54657;
-  color: black;
-  font-family: 'Source Sans Pro', sans-serif;
+/* ---------- GLOBAL BASE ---------- */
+body, .slide {
+  font-family: "Helvetica", sans-serif;
+  background-color: #feebda !important;
+  color: #59262f;
 }
 
-/* Title slide */
-.slide.title-slide {
-  background-color: #582630 !important;
-  color: #fee9d6 !important;
-  text-align: center;
-  padding-top: 10%;
-}
-
-.slide.title-slide h1 {
-  font-size: 3em;
+/* Headings default on light slides */
+h1, h2, h3 {
+  color: #59262f;
   font-weight: 700;
-  border-bottom: 3px solid #fee9d6;
-  display: inline-block;
-  padding-bottom: 6px;
 }
 
-.slide.title-slide h2,
-.slide.title-slide h3,
-.slide.title-slide p {
-  color: #fee9d6 !important;
-  font-size: 1.3em;
+/* ---------- TITLE SLIDE ---------- */
+.title-slide {
+  background-color: #59262f !important;
+  color: #feebda !important;
+  text-align: center;
 }
 
-/* Transition / section slides */
-.slide.dark {
-  background-color: #582630 !important;
-  color: #fee9d6 !important;
+.title-slide h1, 
+.title-slide h2, 
+.title-slide h3,
+.title-slide .author,
+.title-slide .date {
+  color: #feebda !important;
 }
 
-.slide.dark h1,
-.slide.dark h2,
-.slide.dark p,
-.slide.dark li {
-  color: #fee9d6 !important;
+/* ---------- REGULAR SLIDES ---------- */
+.slide:not(.title-slide):not(.dark) {
+  background-color: #feebda !important;
+  color: #59262f !important;
 }
 
-/* Headings on regular slides */
-.slide h1, .slide h2 {
-  color: #003f5c;
+/* optional soft card feel */
+.slide:not(.dark) p,
+.slide:not(.dark) ul,
+.slide:not(.dark) ol {
+  font-size: 1.15em;
+  padding: 10px 0;
 }
 
-/* -------------------------
-   Images
--------------------------- */
-.slide img {
+/* ---------- SECTION / TRANSITION SLIDES ---------- */
+.dark {
+  background-color: #a54657 !important;
+  color: #feebda !important;
+  text-align: center;
+}
+
+.dark h1, .dark h2, .dark h3 {
+  color: #feebda !important;
+}
+
+/* accent underline stripe */
+.dark::after {
+  content: "";
   display: block;
-  margin: auto;
-  margin-bottom: 25px;
-  max-width: 100%;
+  margin: 25px auto;
+  width: 50%;
+  height: 5px;
+  background-color: #f9d2bf;
+  border-radius: 4px;
 }
 
-/* -------------------------
-   Lists
--------------------------- */
-.slide ul li { list-style-type: disc; }
-.slide ul li ul li { list-style-type: circle; }
+/* ---------- LINKS & DETAILS ---------- */
+a { color: #7c3a44; font-weight: bold; }
+strong { color: #a54657; }
 
-/* -------------------------
-   Code Blocks
--------------------------- */
-pre {
-  background-color: #f8f8f8;
-  border: 1px solid #adb5bd;
-  border-radius: 5px;
-  padding: 10px 20px;
-}
-
-/* -------------------------
-   Tables
--------------------------- */
-table {
-  margin: 0 auto 25px;
-  border-spacing: 0;
-  box-shadow: 0 0 20px rgba(0,0,0,0.15);
-}
-
-th {
-  background-color: #003f5c;
-  color: white;
-  padding: 10px;
-}
-
-td, th {
-  padding: 1em;
-}
-
-tbody tr:hover td {
-  background-color: #e5e5e5;
+/* image scaling */
+.slide img {
+  max-width: 85%;
+  display: block;
+  margin: 0 auto;
 }
 
