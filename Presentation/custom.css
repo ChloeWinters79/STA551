@@ -1,5 +1,5 @@
 /* =========================================================
-   CUSTOM IOSLIDES THEME
+   CUSTOM SLIDY PRESENTATION THEME
    Palette:
    Rose        #a54657
    Burgundy    #59262f
@@ -50,10 +50,22 @@
   color: #feebda !important;
 }
 
+/* ✅ FIX: center all text under title */
+.title-slide p {
+  text-align: center;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  margin-top: 10px;
+  margin-bottom: 0;
+  font-weight: 400;
+  font-size: 1.1em;
+  opacity: 0.95;
+}
+
 /* -------------------------------
    TRANSITION / SECTION SLIDES
    Use: # Methods {.dark}
-   CENTERED (by design)
+   CENTERED
 ------------------------------- */
 .dark {
   background-color: #a54657 !important;
@@ -86,9 +98,20 @@
   font-weight: 400;
 }
 
+/* ✅ FIX: center text under transition titles */
+.dark p {
+  text-align: center;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  margin-top: 10px;
+  margin-bottom: 0;
+  font-weight: 400;
+  font-size: 1.1em;
+  opacity: 0.95;
+}
+
 /* -------------------------------
    REGULAR CONTENT SLIDES
-   White section-slide style
 ------------------------------- */
 .slide:not(.title-slide):not(.dark) h1,
 .slide:not(.title-slide):not(.dark) h2 {
