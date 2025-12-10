@@ -40,28 +40,47 @@ h1, h2, h3 {
   padding: 10px 0;
 }
 
-/* ---------- SECTION / TRANSITION SLIDES ---------- */
+/* ---------- SECTION / TRANSITION SLIDES (centered) ---------- */
 .dark {
   background-color: #a54657 !important;
   color: #feebda !important;
+  
+  /* full centering layout */
+  display: flex !important;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
   text-align: center;
+
+  padding: 60px;                 /* breathing room */
+  min-height: 100vh !important;  /* ensure full screen */
 }
 
+/* Heading style on transitions */
 .dark h1, .dark h2, .dark h3 {
   color: #feebda !important;
+  margin-top: 0;
+  font-size: 2.2em;
+  font-weight: 700;
 }
 
-/* accent underline stripe */
+/* Center lists and paragraphs */
+.dark p, .dark ul, .dark ol {
+  font-size: 1.3em;
+  max-width: 70%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* optional clean underline accent */
 .dark::after {
   content: "";
-  display: block;
-  margin: 25px auto;
-  width: 50%;
-  height: 5px;
+  margin-top: 25px;
+  width: 45%;
+  height: 6px;
   background-color: #f9d2bf;
   border-radius: 4px;
 }
-
 /* ---------- LINKS & DETAILS ---------- */
 a { color: #7c3a44; font-weight: bold; }
 strong { color: #a54657; }
