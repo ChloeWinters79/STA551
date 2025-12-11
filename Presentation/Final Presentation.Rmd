@@ -595,7 +595,7 @@ Fall 2025
 -   Still a 3:1 ratio of no churn:churn
 -   Plenty of data to work with
 
-```{r, fig.height= 5 }
+```{r, fig.height= 4}
 ggplot(churn, aes(x = Churn, fill = Churn)) +
   geom_bar() +
   theme_minimal()
@@ -608,7 +608,7 @@ ggplot(churn, aes(x = Churn, fill = Churn)) +
 -   Churned customers have higher monthly charges, and shorter terms
 -   Total charges shows less of a difference between churners and non churners
 
-```{r, fig.height=5}
+```{r, fig.height=4}
 churn %>%
   select(Term, Monthly_Charges, Total_Charges, Churn) %>%
   pivot_longer(cols = -Churn) %>%
@@ -712,7 +712,7 @@ broom::tidy(stepModel, exponentiate = TRUE) %>%
 # Full Model
 
 -   Includes all the variables. Numeric variables were scaled, categorical variables were converted to dummy variables
--   Weights indicate that streaming videos (no internet), monthly charges, sex (Female), have strong positive influence
+-   Weights indicate that streaming videos (no internet), monthly charges, internet service (no service), Multiple lines (No), and Phone Service (Yes) have strong influence
 
 ```{r}
 NN_full$result.matrix %>%
@@ -754,7 +754,7 @@ NN_reduced$result.matrix %>%
 
 -   Non-penalize model, no deductions for false positives or false negatives
 
-```{r, fig.height=6}
+```{r, fig.height=5}
 rpart.plot(gini.tree.1.1, main = "Decision Tree (Non-Penalized)")
 ```
 
@@ -764,7 +764,7 @@ rpart.plot(gini.tree.1.1, main = "Decision Tree (Non-Penalized)")
 
 -   A false negative would mean that the model incorrectly identifies a customer as a churn risk when they would actually stay loyal
 
-```{r, fig.height=6}
+```{r, fig.height=5}
 rpart.plot(gini.tree.1.10, main = "Decision Tree (Penalized for False Negatives)")
 ```
 
@@ -774,7 +774,7 @@ rpart.plot(gini.tree.1.10, main = "Decision Tree (Penalized for False Negatives)
 
 -   A false positive would mean that the model incorrectly identifies a customer as loyal when they actually leave
 
-```{r, fig.height=6}
+```{r, fig.height=5}
 rpart.plot(gini.tree.10.1, main = "Churn Tree: Gini Penalized (FP = 10x)")
 ```
 
