@@ -543,11 +543,15 @@ Fall 2025
 
 # Introduction
 
--   Customer churn represents a loss of revenue and increased acquisition costs.
+-   Telecommunication customer service data
 
--   Understanding what drives churn drivers allows for targeted retention.
+    \
 
--   This assignment will compare models and determining the optimal one
+-   1,000 customer observations
+
+    \
+
+-   14 variables
 
 ------------------------------------------------------------------------
 
@@ -555,11 +559,7 @@ Fall 2025
 
 ------------------------------------------------------------------------
 
-# Data Summary
-
--   Telecommunication customer service data\
--   1,000 customer observations\
--   14 variables
+# Variables
 
 ::::: columns
 ::: column
@@ -1030,6 +1030,7 @@ $$
 # General Discussion
 
 -   Potential faults
+
     -   Argument for Decision Tree potentially being better
 
 -   Stepwise model might be harder to interpret to non statisticians
