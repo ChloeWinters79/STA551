@@ -1,29 +1,51 @@
 /* =========================================================
-   CUSTOM SLIDY PRESENTATION THEME
+   CUSTOM SLIDY PRESENTATION THEME — UPDATED VERSION
    Palette:
    Rose        #a54657
    Burgundy    #59262f
    Cream       #feebda
 ========================================================= */
 
+
 /* -------------------------------
    GOOGLE FONTS
 ------------------------------- */
 @import url('https://fonts.googleapis.com/css?family=Lora:400,700|Open+Sans:400,600&display=swap');
 
-/* -------------------------------
-   GLOBAL SLIDES
-------------------------------- */
+
+/* =========================================================
+   GLOBAL FIXES — PREVENT WHITE BACKGROUND ON LONG SLIDES
+========================================================= */
+
+html, body {
+  background-color: #feebda !important;
+}
+
+.slide,
+div.slide,
+section.slide {
+  background-color: #feebda !important;
+  min-height: 100vh !important;
+  height: auto !important;
+  overflow-y: auto !important;
+  color: #59262f;
+}
+
+
+/* =========================================================
+   BASE SLIDE STYLING
+========================================================= */
+
 .slide {
   font-family: 'Open Sans', sans-serif;
-  background-color: #feebda !important;
-  color: #59262f;
   padding: 40px 60px;
 }
 
-/* -------------------------------
+
+/* =========================================================
    TITLE SLIDE (CENTERED)
-------------------------------- */
+========================================================= */
+
 .title-slide {
   background-color: #59262f !important;
   color: #feebda !important;
@@ -50,23 +72,20 @@
   color: #feebda !important;
 }
 
-/* ✅ FIX: center all text under title */
 .title-slide p {
   text-align: center;
-  margin-left: auto !important;
-  margin-right: auto !important;
-  margin-top: 10px;
-  margin-bottom: 0;
+  margin: 10px auto 0 auto;
   font-weight: 400;
   font-size: 1.1em;
   opacity: 0.95;
 }
 
-/* -------------------------------
-   TRANSITION / SECTION SLIDES
-   Use: # Methods {.dark}
-   CENTERED
-------------------------------- */
+
+/* =========================================================
+   SECTION BREAK / DARK SLIDES
+   (Use syntax: ## Methods {.dark})
+========================================================= */
+
 .dark {
   background-color: #a54657 !important;
   color: #feebda !important;
@@ -98,21 +117,19 @@
   font-weight: 400;
 }
 
-/* ✅ FIX: center text under transition titles */
 .dark p {
   text-align: center;
-  margin-left: auto !important;
-  margin-right: auto !important;
-  margin-top: 10px;
-  margin-bottom: 0;
+  margin: 10px auto 0 auto;
   font-weight: 400;
   font-size: 1.1em;
   opacity: 0.95;
 }
 
-/* -------------------------------
+
+/* =========================================================
    REGULAR CONTENT SLIDES
-------------------------------- */
+========================================================= */
+
 .slide:not(.title-slide):not(.dark) h1,
 .slide:not(.title-slide):not(.dark) h2 {
   font-size: 2.2em;
@@ -131,26 +148,32 @@
   color: #59262f;
 }
 
-/* -------------------------------
+
+/* =========================================================
    BODY TEXT
-------------------------------- */
+========================================================= */
+
 .slide p {
   line-height: 1.6;
   max-width: 900px;
 }
 
-/* -------------------------------
+
+/* =========================================================
    IMAGES
-------------------------------- */
+========================================================= */
+
 img {
   display: block;
   margin: 0 auto 25px auto;
   max-width: 100%;
 }
 
-/* -------------------------------
+
+/* =========================================================
    LISTS
-------------------------------- */
+========================================================= */
+
 ul > li {
   list-style-type: disc;
 }
@@ -159,9 +182,11 @@ ul ul > li {
   list-style-type: circle;
 }
 
-/* -------------------------------
+
+/* =========================================================
    CODE BLOCKS
-------------------------------- */
+========================================================= */
+
 pre {
   padding: 12px 18px !important;
   border-radius: 6px;
@@ -170,9 +195,11 @@ pre {
   font-size: 0.9em;
 }
 
-/* -------------------------------
+
+/* =========================================================
    TABLES
-------------------------------- */
+========================================================= */
+
 table.rmdtable {
   margin: 20px auto;
   border-spacing: 0;
@@ -194,5 +221,6 @@ table.rmdtable th {
 table.rmdtable tbody tr:hover td {
   background-color: #f9d2bf;
 }
+
 
 
