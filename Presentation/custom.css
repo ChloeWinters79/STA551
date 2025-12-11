@@ -1,5 +1,5 @@
 /* =========================================================
-   CUSTOM SLIDY PRESENTATION THEME — UPDATED VERSION
+   CUSTOM SLIDY PRESENTATION THEME — FIXED VERSION
    Palette:
    Rose        #a54657
    Burgundy    #59262f
@@ -14,31 +14,32 @@
 
 
 /* =========================================================
-   GLOBAL FIXES — PREVENT WHITE BACKGROUND ON LONG SLIDES
+   GLOBAL / PAGE BACKGROUND
+   (So overflow never shows pure white)
 ========================================================= */
 
 html, body {
   background-color: #feebda !important;
-}
-
-.slide,
-div.slide,
-section.slide {
-  background-color: #feebda !important;
-  min-height: 100vh !important;
-  height: auto !important;
-  overflow-y: auto !important;
-  color: #59262f;
+  margin: 0;
+  padding: 0;
 }
 
 
 /* =========================================================
    BASE SLIDE STYLING
+   (Default cream slides, scrolling if too tall)
 ========================================================= */
 
 .slide {
   font-family: 'Open Sans', sans-serif;
+  background-color: #feebda !important;
+  color: #59262f;
   padding: 40px 60px;
+
+  /* Prevent white bottom on tall slides */
+  min-height: 100vh;
+  height: auto;
+  overflow-y: auto;
 }
 
 
@@ -72,9 +73,13 @@ section.slide {
   color: #feebda !important;
 }
 
+/* Center & tidy text block under title */
 .title-slide p {
   text-align: center;
-  margin: 10px auto 0 auto;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  margin-top: 10px;
+  margin-bottom: 0;
   font-weight: 400;
   font-size: 1.1em;
   opacity: 0.95;
@@ -82,8 +87,8 @@ section.slide {
 
 
 /* =========================================================
-   SECTION BREAK / DARK SLIDES
-   (Use syntax: ## Methods {.dark})
+   TRANSITION / SECTION SLIDES
+   Use in Rmd: ## Methods {.dark}
 ========================================================= */
 
 .dark {
@@ -117,9 +122,13 @@ section.slide {
   font-weight: 400;
 }
 
+/* Center paragraph text on dark slides */
 .dark p {
   text-align: center;
-  margin: 10px auto 0 auto;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  margin-top: 10px;
+  margin-bottom: 0;
   font-weight: 400;
   font-size: 1.1em;
   opacity: 0.95;
@@ -221,6 +230,4 @@ table.rmdtable th {
 table.rmdtable tbody tr:hover td {
   background-color: #f9d2bf;
 }
-
-
 
