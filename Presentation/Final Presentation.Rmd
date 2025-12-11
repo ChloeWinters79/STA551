@@ -1,0 +1,1043 @@
+---
+output:
+  slidy_presentation:
+    css: "https://chloewinters79.github.io/STA551/Presentation/custom.css"
+    widescreen: yes
+    self_contained: false
+---
+
+```{r setup, include=FALSE}
+############################################
+# LIBRARIES
+############################################
+library(tidyverse)
+library(ggplot2)
+library(corrplot)
+library(GGally)
+library(pROC)
+library(MASS)
+library(rpart)
+library(rpart.plot)
+library(neuralnet)
+library(reshape2)
+library(plotly)
+library(knitr)
+library(dplyr)
+
+
+knitr::opts_chunk$set(echo = FALSE,       
+                      warning = FALSE,   
+                      result = TRUE,   
+                      message = FALSE,
+                      comment = NA) 
+
+
+
+
+url ="https://chloewinters79.github.io/STA551/Data/churn_output.csv"
+churn = read.csv(url, header = TRUE)
+
+cat_vars <- c("Sex", "Marital_Status", "Phone_service", "International_plan",
+              "Voice_mail_plan", "Multiple_line", "Internet_service",
+              "Technical_support", "Streaming_Videos", "Agreement_period", "Churn")
+
+churn[cat_vars] <- lapply(churn[cat_vars], factor)
+
+
+
+
+# Convert Appropriate Variables to Factors
+cat_vars <- c("Sex", "Marital_Status", "Phone_service", "International_plan",
+              "Voice_mail_plan", "Multiple_line", "Internet_service",
+              "Technical_support", "Streaming_Videos", "Agreement_period", "Churn")
+
+churn[cat_vars] <- lapply(churn[cat_vars], factor)
+
+
+# Summary Statistics 
+# For categorical variables
+for (v in cat_vars) {
+  print(v)
+  print(table(churn[[v]]))
+}
+
+# For numerical variables
+num_vars <- c("Term", "Monthly_Charges", "Total_Charges")
+summary(churn[num_vars])
+
+
+# Fix International
+churn$International_plan <- ifelse(tolower(churn$International_plan) == "yes", "Yes",
+                            ifelse(tolower(churn$International_plan) == "no", "No",
+                                   churn$International_plan))
+
+churn$International_plan <- factor(churn$International_plan)
+
+
+
+# Explore Target Variable (Churn) 
+prop.table(table(churn$Churn))
+ggplot(churn, aes(x = Churn, fill = Churn)) +
+  geom_bar() +
+  labs(title = "Distribution of Customer Churn") +
+  theme_minimal()
+
+# Explore Relationships Between Features and Churn
+
+# Numeric vs Target
+churn %>%
+  dplyr::select(all_of(num_vars), Churn) %>%
+  pivot_longer(cols = all_of(num_vars), names_to = "Variable", values_to = "Value") %>%
+  ggplot(aes(x = Churn, y = Value, fill = Churn)) +
+  geom_boxplot(outlier.color = "red") +
+  facet_wrap(~Variable, scales = "free") +
+  labs(title = "Numeric Feature Distributions by Churn Status") +
+  theme_minimal()
+
+# Select categorical variables excluding Churn
+cat_vars_plot <- cat_vars[-length(cat_vars)]
+
+# Set up 3x3 grid
+par(mfrow = c(2, 3), mar = c(5, 4, 2, 1))
+
+for (v in cat_vars_plot) {
+  counts <- table(churn[[v]], churn$Churn)
+  prop <- prop.table(counts, 1)  # row proportions
+  barplot(t(prop), col = c("blue", "red"), beside = TRUE,
+          main = v, ylab = "Proportion", legend.text = TRUE)
+}
+
+# Reset layout
+par(mfrow = c(1, 1))
+
+
+
+num_data <- churn %>%
+  select(all_of(num_vars)) %>%
+  drop_na()
+
+
+# Compute correlation matrix
+cor_mat <- cor(num_data)
+
+# Melt correlation matrix for ggplot
+cor_melt <- melt(cor_mat)
+
+# Heatmap
+ggplot(cor_melt, aes(x = Var1, y = Var2, fill = value)) +
+  geom_tile(color = "white") +
+  scale_fill_gradient2(low = "blue", high = "red", mid = "white",
+                       midpoint = 0, limit = c(-1,1), space = "Lab",
+                       name="Correlation") +
+  geom_text(aes(label = round(value, 2)), color = "black", size = 4) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
+  labs(title = "Correlation Heatmap of Numeric Variables", x = "", y = "")
+
+
+# Split data into training and testing
+set.seed(123)
+train_index <- sample(1:nrow(churn), 0.7 * nrow(churn))
+train_data <- churn[train_index, ]
+test_data <- churn[-train_index, ]
+
+# Full logistic model including all variables
+fullModel <- glm(Churn ~ Sex + Marital_Status + Term + Phone_service + International_plan + 
+                   Voice_mail_plan + Multiple_line + Internet_service + Technical_support + 
+                   Streaming_Videos + Agreement_period + Monthly_Charges + Total_Charges,
+                 data = train_data, family = binomial)
+
+summary(fullModel)
+
+# Reduced logistic model
+reducedModel <- glm(Churn ~ Term + Internet_service + Agreement_period + Total_Charges,
+                    data = train_data, family = binomial)
+summary(reducedModel)
+
+# Stepwise logistic model (both directions)
+stepModel <- stepAIC(fullModel, direction = "both", trace = FALSE)
+summary(stepModel)
+
+
+# Scale numeric variables
+churn_nn <- churn %>%
+  mutate(
+    Term_scale = (Term - min(Term)) / (max(Term) - min(Term)),
+    Monthly_Charges_scale = (Monthly_Charges - min(Monthly_Charges)) / 
+                            (max(Monthly_Charges) - min(Monthly_Charges)),
+    Total_Charges_scale = (Total_Charges - min(Total_Charges)) / 
+                          (max(Total_Charges) - min(Total_Charges))
+  )
+
+# Drop original numeric columns
+churn_nn <- churn_nn[, !(names(churn_nn) %in% c("Term", "Monthly_Charges", "Total_Charges"))]
+
+# Convert Churn to numeric
+churn_nn$Churn_num <- ifelse(churn_nn$Churn == "Yes", 1, 0)
+
+# Convert categorical variables to dummy variables
+cat_vars <- setdiff(colnames(churn_nn), c("Term_scale", "Monthly_Charges_scale", "Total_Charges_scale", "Churn", "Churn_num"))
+
+churn_nn_dummy <- churn_nn %>%
+  mutate(across(all_of(cat_vars), as.factor)) %>%
+  model.matrix(~ . - 1, data = .) %>%
+  as.data.frame()
+
+# Clean column names
+colnames(churn_nn_dummy) <- make.names(colnames(churn_nn_dummy))
+
+# Add numeric target back
+churn_nn_dummy$Churn_num <- churn_nn$Churn_num
+
+# Full Model
+
+NN_vars_full <- setdiff(colnames(churn_nn_dummy), "Churn_num")
+nn_formula_full <- as.formula(paste("Churn_num ~", paste(NN_vars_full, collapse = "+")))
+
+NN_full <- neuralnet(nn_formula_full, data = churn_nn_dummy, hidden = 1,
+                     act.fct = "logistic", linear.output = FALSE)
+
+NN_full$result.matrix
+
+
+# Reduced Model
+NN_vars_reduced <- c("Term_scale", "Total_Charges_scale", "Agreement_periodOne.year.contract", "Agreement_periodTwo.year.contract")
+nn_formula_reduced <- as.formula(paste("Churn_num ~", paste(NN_vars_reduced, collapse = "+")))
+
+NN_reduced <- neuralnet(nn_formula_reduced, data = churn_nn_dummy, hidden = 1,
+                        act.fct = "logistic", linear.output = FALSE)
+
+NN_reduced$result.matrix
+
+
+tree.builder = function(in.data, fp, fn, purity){
+   tree = rpart(Churn ~ .,                
+                data = in.data, 
+                na.action  = na.rpart,
+                method = "class",
+                model  = FALSE,
+                x = FALSE,
+                y = TRUE,
+                parms = list(
+                         loss = matrix(c(0, fp, fn, 0), ncol = 2, byrow = TRUE),
+                         split = purity),
+                control = rpart.control(
+                        minsplit = 10,
+                        minbucket = 10,
+                        cp = 0.01,
+                        xval = 10)
+             )
+}
+
+
+
+gini.tree.1.1 <- tree.builder(train_data, 1, 1, "gini")
+rpart.plot(gini.tree.1.1, main = "Churn Tree: Gini Non-Penalized")
+
+
+
+# Penalized: FN = 10 times FP
+gini.tree.1.10 <- tree.builder(train_data, 1, 10, "gini")
+
+# Plot
+rpart.plot(gini.tree.1.10, main = "Churn Tree: Gini Penalized (FN = 10x)")
+
+
+# Penalized: FP = 10 times FN
+gini.tree.10.1 <- tree.builder(train_data, 10, 1, "gini")
+
+rpart.plot(gini.tree.10.1, main = "Churn Tree: Gini Penalized (FP = 10x)")
+
+
+# --- Predictions for each logistic model ---
+pred_full    <- predict(fullModel, newdata = test_data, type = "response")
+pred_reduced <- predict(reducedModel, newdata = test_data, type = "response")
+pred_step    <- predict(stepModel, newdata = test_data, type = "response")
+
+# --- ROC and AUC for each ---
+roc_full    <- roc(test_data$Churn, pred_full, levels = c("No", "Yes"))
+roc_reduced <- roc(test_data$Churn, pred_reduced, levels = c("No", "Yes"))
+roc_step    <- roc(test_data$Churn, pred_step, levels = c("No", "Yes"))
+
+auc_full    <- auc(roc_full)
+auc_reduced <- auc(roc_reduced)
+auc_step    <- auc(roc_step)
+
+# --- AUC summary table ---
+AUC_logistic <- data.frame(
+  Model = c("Full Logistic", "Reduced Logistic", "Stepwise Logistic"),
+  AUC = c(auc_full, auc_reduced, auc_step)
+)
+AUC_logistic
+
+plot(roc_full, col = "blue", lwd = 2, main = "ROC Curves for Logistic Models")
+plot(roc_reduced, col = "red", lwd = 2, lty = 2, add = TRUE)
+plot(roc_step, col = "darkgreen", lwd = 2, lty = 3, add = TRUE)
+abline(0, 1, lty = 2, col = "gray")
+
+legend("bottomright",
+       legend = c(
+         paste("Full (AUC =", round(auc_full, 3), ")"),
+         paste("Reduced (AUC =", round(auc_reduced, 3), ")"),
+         paste("Stepwise (AUC =", round(auc_step, 3), ")")
+       ),
+       col = c("blue", "red", "darkgreen"), lty = 1:3, lwd = 2, bty = "n")
+
+
+# Split churn_nn_dummy into train/test
+set.seed(123)
+train_index <- sample(1:nrow(churn_nn_dummy), 0.7 * nrow(churn_nn_dummy))
+train_nn <- churn_nn_dummy[train_index, ]
+test_nn  <- churn_nn_dummy[-train_index, ]
+
+# Variables for full and reduced perceptron
+NN_vars_full <- setdiff(colnames(train_nn), "Churn_num")
+NN_vars_reduced <- c("Term_scale", "Total_Charges_scale", 
+                     "Agreement_periodOne.year.contract", 
+                     "Agreement_periodTwo.year.contract")
+
+# Train full perceptron
+NN_full <- neuralnet(as.formula(paste("Churn_num ~", paste(NN_vars_full, collapse="+"))),
+                     data = train_nn, hidden = 1,
+                     act.fct = "logistic", linear.output = FALSE)
+
+# Train reduced perceptron
+NN_reduced <- neuralnet(as.formula(paste("Churn_num ~", paste(NN_vars_reduced, collapse="+"))),
+                        data = train_nn, hidden = 1,
+                        act.fct = "logistic", linear.output = FALSE)
+
+# Predictions on test set
+NN_full_pred    <- compute(NN_full, test_nn[, NN_vars_full])$net.result
+NN_reduced_pred <- compute(NN_reduced, test_nn[, NN_vars_reduced])$net.result
+
+# ROC and AUC
+roc_NN_full    <- roc(test_nn$Churn_num, NN_full_pred)
+roc_NN_reduced <- roc(test_nn$Churn_num, NN_reduced_pred)
+
+auc_NN_full    <- auc(roc_NN_full)
+auc_NN_reduced <- auc(roc_NN_reduced)
+
+# --- AUC summary table ---
+AUC_perceptron <- data.frame(
+  Model = c("Full Perceptron", "Reduced Perceptron"),
+  AUC = c(auc_NN_full, auc_NN_reduced)
+)
+AUC_perceptron
+
+# --- Plot ROC curves ---
+plot(roc_NN_full, col = "purple", lwd = 2, main = "ROC Curves for Perceptron Models (Test Data)")
+plot(roc_NN_reduced, col = "orange", lwd = 2, lty = 2, add = TRUE)
+abline(0, 1, lty = 2, col = "gray")
+
+legend("bottomright",
+       legend = c(
+         paste("Full (AUC =", round(auc_NN_full, 3), ")"),
+         paste("Reduced (AUC =", round(auc_NN_reduced, 3), ")")
+       ),
+       col = c("purple", "orange"), lty = 1:2, lwd = 2, bty = "n")
+
+
+SenSpe <- function(in.data, fp, fn, purity){
+  cutoff = seq(0, 1, length = 20)
+  model = tree.builder(in.data, fp, fn, purity)
+  pred = predict(model, newdata = in.data, type = "prob")
+  
+  # Initialize matrix for Sensitivity and Specificity
+  senspe.mtx = matrix(0, ncol = length(cutoff), nrow = 2)
+  
+  for (i in 1:length(cutoff)){
+    pred.out = ifelse(pred[,"Yes"] >= cutoff[i], "Yes", "No")
+    TP = sum(pred.out == "Yes" & in.data$Churn == "Yes")
+    TN = sum(pred.out == "No"  & in.data$Churn == "No")
+    FP = sum(pred.out == "Yes" & in.data$Churn == "No")
+    FN = sum(pred.out == "No"  & in.data$Churn == "Yes")
+    
+    senspe.mtx[1,i] = TP / (TP + FN)  # Sensitivity
+    senspe.mtx[2,i] = TN / (TN + FP)  # Specificity
+  }
+  
+  # ROC and AUC calculation
+  ROCobj <- roc(in.data$Churn == "Yes", pred[,"Yes"])
+  AUC = auc(ROCobj)
+  
+  list(senspe.mtx = senspe.mtx, AUC = round(AUC, 3))
+}
+
+
+# Non-penalized
+giniROC11   = SenSpe(in.data = train_data, fp = 1, fn = 1, purity = "gini")
+infoROC11   = SenSpe(in.data = train_data, fp = 1, fn = 1, purity = "information")
+
+# Penalize false negatives (customers leaving)
+giniROC110  = SenSpe(in.data = train_data, fp = 1, fn = 10, purity = "gini")
+infoROC110  = SenSpe(in.data = train_data, fp = 1, fn = 10, purity = "information")
+
+# Penalize false positives (customers incorrectly flagged as leaving)
+giniROC101  = SenSpe(in.data = train_data, fp = 10, fn = 1, purity = "gini")
+infoROC101  = SenSpe(in.data = train_data, fp = 10, fn = 1, purity = "information")
+
+
+par(pty = "s")  # square plot
+colors = c("#008B8B", "#00008B", "#8B008B", "#8B0000", "#8B8B00", "#8B4500")
+
+plot(1 - giniROC11$senspe.mtx[2,], giniROC11$senspe.mtx[1,], 
+     type = "l", 
+     xlim = c(0, 1), 
+     ylim = c(0, 1), 
+     xlab = "1 - Specificity: FPR", 
+     ylab = "Sensitivity: TPR", 
+     col = colors[1], 
+     lwd = 2,
+     main = "ROC Curves of Decision Trees", 
+     cex.main = 0.9, 
+     col.main = "navy")
+
+abline(0, 1, lty = 2, col = "orchid4", lwd = 2)
+
+lines(1 - infoROC11$senspe.mtx[2,], infoROC11$senspe.mtx[1,], 
+      col = colors[2], lwd = 2, lty = 2)
+lines(1 - giniROC110$senspe.mtx[2,], giniROC110$senspe.mtx[1,],
+      col = colors[3], lwd = 2)
+lines(1 - infoROC110$senspe.mtx[2,], infoROC110$senspe.mtx[1,], 
+      col = colors[4], lwd = 2, lty = 2)
+lines(1 - giniROC101$senspe.mtx[2,], giniROC101$senspe.mtx[1,], 
+      col = colors[5], lwd = 2, lty = 4)
+lines(1 - infoROC101$senspe.mtx[2,], infoROC101$senspe.mtx[1,], 
+      col = colors[6], lwd = 2, lty = 2)
+
+legend("bottomright",
+       c(paste("gini.1.1,  AUC =", giniROC11$AUC), 
+         paste("info.1.1,  AUC =", infoROC11$AUC), 
+         paste("gini.1.10, AUC =", giniROC110$AUC), 
+         paste("info.1.10, AUC =", infoROC110$AUC),
+         paste("gini.10.1, AUC =", giniROC101$AUC), 
+         paste("info.10.1, AUC =", infoROC101$AUC)),
+       col = colors, 
+       lty = rep(1:2, 3), 
+       lwd = rep(2, 6), 
+       cex = 0.8, 
+       bty = "n")
+
+# Create AUC summary table
+AUC_results <- data.frame(
+  Model = c("Gini (1,1)", "Gini (1,10)", "Gini (10,1)",
+            "Info (1,1)", "Info (1,10)", "Info (10,1)"),
+  AUC = c(giniROC11$AUC, giniROC110$AUC, giniROC101$AUC,
+          infoROC11$AUC, infoROC110$AUC, infoROC101$AUC)
+)
+
+AUC_results
+
+set.seed(123)
+
+# Number of bootstrap resamples
+B <- 1000
+
+# Function to perform bootstrap AUC evaluation
+bootstrap_auc <- function(model, data, model_type, model_name = "Model", response_col = "Churn") {
+  auc_vec <- numeric(B)
+  sample.size <- nrow(data)
+  
+  for (k in 1:B) {
+    boot.id <- sample(1:sample.size, sample.size, replace = TRUE)
+    boot.sample <- data[boot.id, ]
+    
+    if (model_type == "logistic") {
+      preds <- predict(model, newdata = boot.sample, type = "response")
+      
+    } else if (model_type == "tree") {
+      preds <- predict(model, newdata = boot.sample, type = "prob")[, "Yes"]
+      
+    } else if (model_type == "nn") {
+      # Preprocessing to match NN training
+      boot.sample$Term_scale <- scale(boot.sample$Term)
+      boot.sample$Total_Charges_scale <- scale(boot.sample$Total_Charges)
+      boot.sample$Agreement_periodOne.year.contract <- ifelse(boot.sample$Agreement_period == "One year contract", 1, 0)
+      boot.sample$Agreement_periodTwo.year.contract <- ifelse(boot.sample$Agreement_period == "Two year contract", 1, 0)
+      
+      newdata <- boot.sample[, c("Term_scale",
+                                 "Total_Charges_scale",
+                                 "Agreement_periodOne.year.contract",
+                                 "Agreement_periodTwo.year.contract"), drop = FALSE]
+      preds <- compute(model, newdata)$net.result
+      preds <- as.vector(preds)
+    }
+    
+    ROCobj <- roc(boot.sample[[response_col]], preds, levels = c("No", "Yes"), quiet = TRUE)
+    auc_vec[k] <- as.numeric(auc(ROCobj))
+  }
+  
+  # Print mean AUC with model name
+  cat(paste0("Mean Bootstrap AUC for ", model_name, ": ", round(mean(auc_vec), 4), "\n"))
+  
+  return(auc_vec)
+}
+
+# Run bootstrapping for each final model
+btAUC_logistic <- bootstrap_auc(stepModel, train_data, model_type = "logistic", model_name = "Logistic Stepwise")
+btAUC_nn       <- bootstrap_auc(NN_reduced, train_data, model_type = "nn", model_name = "Reduced Perceptron")
+btAUC_tree     <- bootstrap_auc(gini.tree.1.1, train_data, model_type = "tree", model_name = "Decision Tree FN Info")
+# Combine results into a data frame for plotting
+boot_df <- data.frame(
+  AUC = c(btAUC_logistic, btAUC_nn, btAUC_tree),
+  Model = factor(rep(c("Stepwise Logistic", "Reduced Perceptron", "Decision Tree FN"),
+                     each = B))
+)
+
+# Plot AUC distributions
+ggplot(boot_df, aes(x = AUC, fill = Model)) +
+  geom_histogram(alpha = 0.6, position = "identity", bins = 30) +
+  facet_wrap(~Model, scales = "free_y") +
+  theme_minimal(base_size = 13) +
+  labs(title = "Bootstrap Sampling Distributions of AUCs (Final Models)",
+       x = "AUC", y = "Frequency") +
+  theme(legend.position = "none")
+
+# Compute 95% Confidence Intervals
+logistic_ci <- quantile(btAUC_logistic, c(0.025, 0.975))
+nn_ci       <- quantile(btAUC_nn, c(0.025, 0.975))
+tree_ci     <- quantile(btAUC_tree, c(0.025, 0.975))
+
+cat("95% Bootstrap CI for Stepwise Logistic:", logistic_ci, "\n")
+cat("95% Bootstrap CI for Reduced Perceptron:", nn_ci, "\n")
+cat("95% Bootstrap CI for Decision Tree FN", tree_ci, "\n")
+
+
+
+```
+
+# Supervised Programming for Customer Churn {#Title .title-slide}
+
+Chloé Winters
+
+STA 551
+
+Fall 2025
+
+------------------------------------------------------------------------
+
+# Overview
+
+-   Introduction
+
+    -   Data
+    -   Exploratory Data Analysis
+
+-   Methodology & Analysis
+
+    -   Logistic Models
+    -   Perceptron Models
+    -   Decision Tree Models
+    -   ROC Curves
+    -   Bagging
+
+-   Results & Conclusion
+
+-   General Discussion
+
+------------------------------------------------------------------------
+
+# Introduction {.title-slide}
+
+------------------------------------------------------------------------
+
+# Introduction
+
+-   Customer churn represents a loss of revenue and increased acquisition costs.
+
+-   Understanding what drives churn drivers allows for targeted retention.
+
+-   This assignment will compare models and determining the optimal one
+
+------------------------------------------------------------------------
+
+# Data {.dark}
+
+------------------------------------------------------------------------
+
+# Data Summary
+
+-   Telecommunication customer service data\
+-   1,000 customer observations\
+-   14 variables
+
+::::: columns
+::: column
+-   **Sex**: (cat)\
+-   **Marital_Status**: (cat)\
+-   **Term**: (num)\
+-   **Phone_service**: (cat)\
+-   **International_plan**: (cat)\
+-   **Voice_mail_plan**: (cat)\
+-   **Multiple_line**: (cat)\
+:::
+
+::: column
+-   **Internet_service**: (cat)\
+-   **Technical_support**: (cat)\
+-   **Streaming_Videos**: (cat)\
+-   **Agreement_period**: (cat)\
+-   **Monthly_Charges**: (num)\
+-   **Total_Charges**: (num)\
+-   **Churn**: (cat)\
+:::
+:::::
+
+------------------------------------------------------------------------
+
+# Exploratory Data Analysis {.dark}
+
+------------------------------------------------------------------------
+
+# Distribution of Churn
+
+-   A majority of churn observations are no, meaning a majority of customers are not churning
+-   Still a 3:1 ratio of no churn:churn
+-   Plenty of data to work with
+
+```{r, fig.height= 5 }
+ggplot(churn, aes(x = Churn, fill = Churn)) +
+  geom_bar() +
+  theme_minimal()
+```
+
+------------------------------------------------------------------------
+
+# Continuous Variable Distribution by Churn
+
+-   Churned customers have higher monthly charges, and shorter terms
+-   Total charges shows less of a difference between churners and non churners
+
+```{r, fig.height=5}
+churn %>%
+  select(Term, Monthly_Charges, Total_Charges, Churn) %>%
+  pivot_longer(cols = -Churn) %>%
+  ggplot(aes(x = Churn, y = value, fill = Churn)) +
+  geom_boxplot() +
+  facet_wrap(~name, scales = "free") +
+  theme_minimal()
+```
+
+------------------------------------------------------------------------
+
+# Methodology & Analysis {.title-slide}
+
+------------------------------------------------------------------------
+
+# Logistic Regression {.dark}
+
+------------------------------------------------------------------------
+
+# Logistic Regression
+
+-   Three logistic models were evaluated:
+
+    -   Full model
+
+    -   Reduced model
+
+    -   Stepwise-selected model
+
+-   Models were compared using ROC curves and AUC on a held-out test set.
+
+------------------------------------------------------------------------
+
+# Full Model
+
+-   Significant predictors were term, internet service no internet, agreement period one year and two year, and total charges.
+-   Some factor levels produced NA estimates due to multicollinearity but did not harm the model.
+
+```{r}
+broom::tidy(fullModel, exponentiate = TRUE) %>%
+  select(term, estimate, p.value) %>%
+  mutate(across(where(is.numeric), ~ round(.x, 3))) %>%
+  knitr::kable(
+    col.names = c(
+      "Predictor",
+      "Odds Ratio",
+      "p-value"
+    ),
+    caption = "Full Logistic Regression Model Results (Odds Ratios)"
+  )
+```
+
+------------------------------------------------------------------------
+
+# Reduced Model
+
+-   Significant predictors were term, internet service no internet, agreement period one and two year, and total charges
+
+```{r}
+broom::tidy(reducedModel, exponentiate = TRUE) %>%
+  select(term, estimate, p.value) %>%
+  mutate(across(where(is.numeric), ~ round(.x, 3))) %>%
+  knitr::kable(
+    col.names = c(
+      "Predictor",
+      "Odds Ratio",
+      "p-value"
+    ),
+    caption = "Reduced Logistic Regression Model Results (Odds Ratios)"
+  )
+```
+
+------------------------------------------------------------------------
+
+# Stepwise Logistic Results
+
+-   Significant predictors were term, technical support no internet, agreement period one and two year, and total charges.
+
+```{r}
+
+broom::tidy(stepModel, exponentiate = TRUE) %>%
+  select(term, estimate, p.value) %>%
+  mutate(across(where(is.numeric), round, 3)) %>%
+  knitr::kable(
+    col.names = c(
+      "Predictor",
+      "Odds Ratio",
+      "p-value"
+    ),
+    caption = "Stepwise Logistic Regression Results (Odds Ratios)"
+  )
+
+```
+
+------------------------------------------------------------------------
+
+# Perceptron Model {.dark}
+
+------------------------------------------------------------------------
+
+# Full Model
+
+-   Includes all the variables. Numeric variables were scaled, categorical variables were converted to dummy variables
+-   Weights indicate that streaming videos (no internet), monthly charges, sex (Female), have strong positive influence
+
+```{r}
+NN_full$result.matrix %>%
+  as.data.frame() %>%
+  mutate(across(where(is.numeric), ~ round(.x, 4))) %>%
+  tibble::rownames_to_column("Metric") %>%
+  knitr::kable(
+    col.names = c("Metric", "Value"),
+    caption = "Full Perceptron Neural Network – Result Matrix"
+  )
+```
+
+------------------------------------------------------------------------
+
+# Reduced Model
+
+-   Includes most important predictors from the full model
+-   Strong influence from term and total charge
+-   Moderate influence from agreement period
+
+```{r}
+NN_reduced$result.matrix %>%
+  as.data.frame() %>%
+  mutate(across(where(is.numeric), ~ round(.x, 4))) %>%
+  tibble::rownames_to_column("Metric") %>%
+  knitr::kable(
+    col.names = c("Metric", "Value"),
+    caption = "Reduced Perceptron Neural Network – Result Matrix"
+  )
+```
+
+------------------------------------------------------------------------
+
+# Decision Trees {.dark}
+
+------------------------------------------------------------------------
+
+# Non-Penalized Decision Tree
+
+-   Non-penalize model, no deductions for false positives or false negatives
+
+```{r, fig.height=6}
+rpart.plot(gini.tree.1.1, main = "Decision Tree (Non-Penalized)")
+```
+
+------------------------------------------------------------------------
+
+# Penalized Decision Tree (False Negatives)
+
+-   A false negative would mean that the model incorrectly identifies a customer as a churn risk when they would actually stay loyal
+
+```{r, fig.height=6}
+rpart.plot(gini.tree.1.10, main = "Decision Tree (Penalized for False Negatives)")
+```
+
+------------------------------------------------------------------------
+
+# Penalized Decision Tree (False Positives)
+
+-   A false positive would mean that the model incorrectly identifies a customer as loyal when they actually leave
+
+```{r, fig.height=6}
+rpart.plot(gini.tree.10.1, main = "Churn Tree: Gini Penalized (FP = 10x)")
+```
+
+------------------------------------------------------------------------
+
+# ROC Curves {.dark}
+
+------------------------------------------------------------------------
+
+# Logistic ROC
+
+-   Stepwise narrowly beats Full which narrowly beats Reduced
+-   Stepwise is the ideal final logistic regression model
+
+```{r, fig.height=4}
+# --- Predictions for each logistic model ---
+pred_full    <- predict(fullModel, newdata = test_data, type = "response")
+pred_reduced <- predict(reducedModel, newdata = test_data, type = "response")
+pred_step    <- predict(stepModel, newdata = test_data, type = "response")
+
+# --- ROC and AUC for each ---
+roc_full    <- roc(test_data$Churn, pred_full, levels = c("No", "Yes"))
+roc_reduced <- roc(test_data$Churn, pred_reduced, levels = c("No", "Yes"))
+roc_step    <- roc(test_data$Churn, pred_step, levels = c("No", "Yes"))
+
+auc_full    <- auc(roc_full)
+auc_reduced <- auc(roc_reduced)
+auc_step    <- auc(roc_step)
+
+# --- AUC summary table ---
+AUC_logistic <- data.frame(
+  Model = c("Full Logistic", "Reduced Logistic", "Stepwise Logistic"),
+  AUC = c(auc_full, auc_reduced, auc_step)
+)
+AUC_logistic
+
+plot(roc_full, col = "blue", lwd = 2, main = "ROC Curves for Logistic Models")
+plot(roc_reduced, col = "red", lwd = 2, lty = 2, add = TRUE)
+plot(roc_step, col = "darkgreen", lwd = 2, lty = 3, add = TRUE)
+abline(0, 1, lty = 2, col = "gray")
+
+legend("bottomright",
+       legend = c(
+         paste("Full (AUC =", round(auc_full, 3), ")"),
+         paste("Reduced (AUC =", round(auc_reduced, 3), ")"),
+         paste("Stepwise (AUC =", round(auc_step, 3), ")")
+       ),
+       col = c("blue", "red", "darkgreen"), lty = 1:3, lwd = 2, bty = "n")
+```
+
+------------------------------------------------------------------------
+
+# Perceptron ROC
+
+-   Perfect AUC for the full model, most likely an error, attempts to correct it were unsuccessful
+-   Leads to the reduced model being the optimal perceptron model
+
+```{r, fig.height=4}
+# Split churn_nn_dummy into train/test
+set.seed(123)
+train_index <- sample(1:nrow(churn_nn_dummy), 0.7 * nrow(churn_nn_dummy))
+train_nn <- churn_nn_dummy[train_index, ]
+test_nn  <- churn_nn_dummy[-train_index, ]
+
+# Variables for full and reduced perceptron
+NN_vars_full <- setdiff(colnames(train_nn), "Churn_num")
+NN_vars_reduced <- c("Term_scale", "Total_Charges_scale", 
+                     "Agreement_periodOne.year.contract", 
+                     "Agreement_periodTwo.year.contract")
+
+# Train full perceptron
+NN_full <- neuralnet(as.formula(paste("Churn_num ~", paste(NN_vars_full, collapse="+"))),
+                     data = train_nn, hidden = 1,
+                     act.fct = "logistic", linear.output = FALSE)
+
+# Train reduced perceptron
+NN_reduced <- neuralnet(as.formula(paste("Churn_num ~", paste(NN_vars_reduced, collapse="+"))),
+                        data = train_nn, hidden = 1,
+                        act.fct = "logistic", linear.output = FALSE)
+
+# Predictions on test set
+NN_full_pred    <- compute(NN_full, test_nn[, NN_vars_full])$net.result
+NN_reduced_pred <- compute(NN_reduced, test_nn[, NN_vars_reduced])$net.result
+
+# ROC and AUC
+roc_NN_full    <- roc(test_nn$Churn_num, NN_full_pred)
+roc_NN_reduced <- roc(test_nn$Churn_num, NN_reduced_pred)
+
+auc_NN_full    <- auc(roc_NN_full)
+auc_NN_reduced <- auc(roc_NN_reduced)
+
+# --- AUC summary table ---
+AUC_perceptron <- data.frame(
+  Model = c("Full Perceptron", "Reduced Perceptron"),
+  AUC = c(auc_NN_full, auc_NN_reduced)
+)
+AUC_perceptron
+
+# --- Plot ROC curves ---
+plot(roc_NN_full, col = "purple", lwd = 2, main = "ROC Curves for Perceptron Models (Test Data)")
+plot(roc_NN_reduced, col = "orange", lwd = 2, lty = 2, add = TRUE)
+abline(0, 1, lty = 2, col = "gray")
+
+legend("bottomright",
+       legend = c(
+         paste("Full (AUC =", round(auc_NN_full, 3), ")"),
+         paste("Reduced (AUC =", round(auc_NN_reduced, 3), ")")
+       ),
+       col = c("purple", "orange"), lty = 1:2, lwd = 2, bty = "n")
+
+
+```
+
+------------------------------------------------------------------------
+
+# Decision ROC
+
+-   There are 6 curves cause each model has a gini and info curve
+-   The decision tree that penalized false negatives has the strongest results
+
+```{r}
+
+par(pty = "s")  # square plot
+colors = c("#008B8B", "#00008B", "#8B008B", "#8B0000", "#8B8B00", "#8B4500")
+
+plot(1 - giniROC11$senspe.mtx[2,], giniROC11$senspe.mtx[1,], 
+     type = "l", 
+     xlim = c(0, 1), 
+     ylim = c(0, 1), 
+     xlab = "1 - Specificity: FPR", 
+     ylab = "Sensitivity: TPR", 
+     col = colors[1], 
+     lwd = 2,
+     main = "ROC Curves of Decision Trees", 
+     cex.main = 0.9, 
+     col.main = "navy")
+
+abline(0, 1, lty = 2, col = "orchid4", lwd = 2)
+
+lines(1 - infoROC11$senspe.mtx[2,], infoROC11$senspe.mtx[1,], 
+      col = colors[2], lwd = 2, lty = 2)
+lines(1 - giniROC110$senspe.mtx[2,], giniROC110$senspe.mtx[1,],
+      col = colors[3], lwd = 2)
+lines(1 - infoROC110$senspe.mtx[2,], infoROC110$senspe.mtx[1,], 
+      col = colors[4], lwd = 2, lty = 2)
+lines(1 - giniROC101$senspe.mtx[2,], giniROC101$senspe.mtx[1,], 
+      col = colors[5], lwd = 2, lty = 4)
+lines(1 - infoROC101$senspe.mtx[2,], infoROC101$senspe.mtx[1,], 
+      col = colors[6], lwd = 2, lty = 2)
+
+legend("bottomright",
+       c(paste("gini.1.1,  AUC =", giniROC11$AUC), 
+         paste("info.1.1,  AUC =", infoROC11$AUC), 
+         paste("gini.1.10, AUC =", giniROC110$AUC), 
+         paste("info.1.10, AUC =", infoROC110$AUC),
+         paste("gini.10.1, AUC =", giniROC101$AUC), 
+         paste("info.10.1, AUC =", infoROC101$AUC)),
+       col = colors, 
+       lty = rep(1:2, 3), 
+       lwd = rep(2, 6), 
+       cex = 0.8, 
+       bty = "n")
+```
+
+------------------------------------------------------------------------
+
+# Bagging {.dark}
+
+------------------------------------------------------------------------
+
+# Bagging
+
+-   Now each of the final models need to be compared
+-   Logistic and Decision Tree models are similar and strong
+-   Perceptron model is the weakest of the three models
+
+```{r, fig.height=5}
+
+library(plotly)
+
+bin_width <- 0.007# adjust if needed
+
+p <- plot_ly()
+
+p <- add_histogram(
+  p,
+  data = subset(boot_df, Model == "Stepwise Logistic"),
+  x = ~AUC,
+  name = "Stepwise Logistic",
+  opacity = 0.6,
+  xbins = list(size = bin_width)
+)
+
+p <- add_histogram(
+  p,
+  data = subset(boot_df, Model == "Reduced Perceptron"),
+  x = ~AUC,
+  name = "Reduced Perceptron",
+  opacity = 0.6,
+  xbins = list(size = bin_width)
+)
+
+p <- add_histogram(
+  p,
+  data = subset(boot_df, Model == "Decision Tree FN"),
+  x = ~AUC,
+  name = "Decision Tree FN",
+  opacity = 0.6,
+  xbins = list(size = bin_width)
+)
+
+p <- layout(
+  p,
+  title = "Interactive Bootstrap AUC Distributions",
+  barmode = "overlay",
+  xaxis = list(title = "AUC"),
+  yaxis = list(title = "Frequency")
+)
+
+p
+
+
+
+```
+
+------------------------------------------------------------------------
+
+# Results & Conclusion {.title-slide}
+
+------------------------------------------------------------------------
+
+# Results & Conclusions
+
+-   Final optimal model is the stepwise logistic regression
+
+-   Due to the smaller AUC and more stability
+
+-   Good amount of variable overlap with other models
+
+$$
+\text{Churn} =
+-0.5002 - 0.0758(\text{Term}) - 1.309(\text{TS_NoInternet}) - 0.451(\text{TS_Yes}) \\
+- 1.612(\text{OneYear}) - 2.146(\text{TwoYear}) \\
++ 0.01183(\text{MonthlyCharges}) + 0.000642(\text{TotalCharges})
+$$
+
+------------------------------------------------------------------------
+
+# General Discussion {.title-slide}
+
+------------------------------------------------------------------------
+
+# General Discussion
+
+-   Potential faults
+    -   Argument for Decision Tree potentially being better
+
+-   Stepwise model might be harder to interpret to non statisticians
+
+-   If someone does not understand how to implement a model its useless to them
+
+------------------------------------------------------------------------
+
+# Thank You {.dark}
+
+Questions?

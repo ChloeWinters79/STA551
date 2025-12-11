@@ -1,0 +1,726 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+ "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title>Final-Presentation.knit</title>
+  <style type="text/css">
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    span.underline{text-decoration: underline;}
+    div.column{display: inline-block; vertical-align: top; width: 50%;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+              </style>
+  <script src="Final-Presentation_files/header-attrs-2.30/header-attrs.js"></script>
+  <link href="Final-Presentation_files/slidy-2/styles/slidy.css" rel="stylesheet" />
+  <script src="Final-Presentation_files/slidy-2/scripts/slidy.js"></script>
+  <script src="Final-Presentation_files/slidy_shiny-1/slidy_shiny.js"></script>
+  <link href="Final-Presentation_files/htmltools-fill-0.5.8.1/fill.css" rel="stylesheet" />
+  <script src="Final-Presentation_files/htmlwidgets-1.6.4/htmlwidgets.js"></script>
+  <script src="Final-Presentation_files/plotly-binding-4.11.0/plotly.js"></script>
+  <script src="Final-Presentation_files/typedarray-0.1/typedarray.min.js"></script>
+  <script src="Final-Presentation_files/jquery-3.5.1/jquery.min.js"></script>
+  <link href="Final-Presentation_files/crosstalk-1.2.2/css/crosstalk.min.css" rel="stylesheet" />
+  <script src="Final-Presentation_files/crosstalk-1.2.2/js/crosstalk.min.js"></script>
+  <link href="Final-Presentation_files/plotly-htmlwidgets-css-2.11.1/plotly-htmlwidgets.css" rel="stylesheet" />
+  <script src="Final-Presentation_files/plotly-main-2.11.1/plotly-latest.min.js"></script>
+  <link rel="stylesheet" type="text/css" media="screen, projection, print"
+   href="https://chloewinters79.github.io/STA551/Presentation/custom.css" />
+</head>
+<body>
+<div id="Title" class="slide section level1 title-slide">
+<h1 class="title-slide">Supervised Programming for Customer Churn</h1>
+<p>Chloé Winters</p>
+<p>STA 551</p>
+<p>Fall 2025</p>
+</div>
+<div id="overview" class="slide section level1">
+<h1>Overview</h1>
+<ul>
+<li><p>Introduction</p>
+<ul>
+<li>Data</li>
+<li>Exploratory Data Analysis</li>
+</ul></li>
+<li><p>Methodology &amp; Analysis</p>
+<ul>
+<li>Logistic Models</li>
+<li>Perceptron Models</li>
+<li>Decision Tree Models</li>
+<li>ROC Curves</li>
+<li>Bagging</li>
+</ul></li>
+<li><p>Results &amp; Conclusion</p></li>
+<li><p>General Discussion</p></li>
+</ul>
+</div>
+<div id="introduction" class="slide section level1 title-slide">
+<h1 class="title-slide">Introduction</h1>
+</div>
+<div id="introduction-1" class="slide section level1">
+<h1>Introduction</h1>
+<ul>
+<li><p>Customer churn represents a loss of revenue and increased
+acquisition costs.</p></li>
+<li><p>Understanding what drives churn drivers allows for targeted
+retention.</p></li>
+<li><p>This assignment will compare models and determining the optimal
+one</p></li>
+</ul>
+</div>
+<div id="data" class="slide section level1 dark">
+<h1 class="dark">Data</h1>
+</div>
+<div id="data-summary" class="slide section level1">
+<h1>Data Summary</h1>
+<ul>
+<li>Telecommunication customer service data<br />
+</li>
+<li>1,000 customer observations<br />
+</li>
+<li>14 variables</li>
+</ul>
+<div class="columns">
+<div class="column">
+<ul>
+<li><strong>Sex</strong>: (cat)<br />
+</li>
+<li><strong>Marital_Status</strong>: (cat)<br />
+</li>
+<li><strong>Term</strong>: (num)<br />
+</li>
+<li><strong>Phone_service</strong>: (cat)<br />
+</li>
+<li><strong>International_plan</strong>: (cat)<br />
+</li>
+<li><strong>Voice_mail_plan</strong>: (cat)<br />
+</li>
+<li><strong>Multiple_line</strong>: (cat)<br />
+</li>
+</ul>
+</div><div class="column">
+<ul>
+<li><strong>Internet_service</strong>: (cat)<br />
+</li>
+<li><strong>Technical_support</strong>: (cat)<br />
+</li>
+<li><strong>Streaming_Videos</strong>: (cat)<br />
+</li>
+<li><strong>Agreement_period</strong>: (cat)<br />
+</li>
+<li><strong>Monthly_Charges</strong>: (num)<br />
+</li>
+<li><strong>Total_Charges</strong>: (num)<br />
+</li>
+<li><strong>Churn</strong>: (cat)<br />
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div id="exploratory-data-analysis" class="slide section level1 dark">
+<h1 class="dark">Exploratory Data Analysis</h1>
+</div>
+<div id="distribution-of-churn" class="slide section level1">
+<h1>Distribution of Churn</h1>
+<ul>
+<li>A majority of churn observations are no, meaning a majority of
+customers are not churning</li>
+<li>Still a 3:1 ratio of no churn:churn</li>
+<li>Plenty of data to work with</li>
+</ul>
+<p><img src="Final-Presentation_files/figure-slidy/unnamed-chunk-1-1.png" width="768" /></p>
+</div>
+<div id="continuous-variable-distribution-by-churn"
+class="slide section level1">
+<h1>Continuous Variable Distribution by Churn</h1>
+<ul>
+<li>Churned customers have higher monthly charges, and shorter
+terms</li>
+<li>Total charges shows less of a difference between churners and non
+churners</li>
+</ul>
+<p><img src="Final-Presentation_files/figure-slidy/unnamed-chunk-2-1.png" width="768" /></p>
+</div>
+<div id="methodology-analysis" class="slide section level1 title-slide">
+<h1 class="title-slide">Methodology &amp; Analysis</h1>
+</div>
+<div id="logistic-regression" class="slide section level1 dark">
+<h1 class="dark">Logistic Regression</h1>
+</div>
+<div id="logistic-regression-1" class="slide section level1">
+<h1>Logistic Regression</h1>
+<ul>
+<li><p>Three logistic models were evaluated:</p>
+<ul>
+<li><p>Full model</p></li>
+<li><p>Reduced model</p></li>
+<li><p>Stepwise-selected model</p></li>
+</ul></li>
+<li><p>Models were compared using ROC curves and AUC on a held-out test
+set.</p></li>
+</ul>
+</div>
+<div id="full-model" class="slide section level1">
+<h1>Full Model</h1>
+<ul>
+<li>Significant predictors were term, internet service no internet,
+agreement period one year and two year, and total charges.</li>
+<li>Some factor levels produced NA estimates due to multicollinearity
+but did not harm the model.</li>
+</ul>
+<table>
+<caption>Full Logistic Regression Model Results (Odds Ratios)</caption>
+<thead>
+<tr class="header">
+<th align="left">Predictor</th>
+<th align="right">Odds Ratio</th>
+<th align="right">p-value</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">(Intercept)</td>
+<td align="right">1.410</td>
+<td align="right">0.751</td>
+</tr>
+<tr class="even">
+<td align="left">SexMale</td>
+<td align="right">0.941</td>
+<td align="right">0.777</td>
+</tr>
+<tr class="odd">
+<td align="left">Marital_StatusSingle</td>
+<td align="right">1.022</td>
+<td align="right">0.961</td>
+</tr>
+<tr class="even">
+<td align="left">Term</td>
+<td align="right">0.927</td>
+<td align="right">0.000</td>
+</tr>
+<tr class="odd">
+<td align="left">Phone_serviceYes</td>
+<td align="right">1.005</td>
+<td align="right">0.994</td>
+</tr>
+<tr class="even">
+<td align="left">International_planYes</td>
+<td align="right">1.106</td>
+<td align="right">0.700</td>
+</tr>
+<tr class="odd">
+<td align="left">Voice_mail_planYes</td>
+<td align="right">0.852</td>
+<td align="right">0.463</td>
+</tr>
+<tr class="even">
+<td align="left">Multiple_lineNo phone</td>
+<td align="right">NA</td>
+<td align="right">NA</td>
+</tr>
+<tr class="odd">
+<td align="left">Multiple_lineYes</td>
+<td align="right">0.853</td>
+<td align="right">0.543</td>
+</tr>
+<tr class="even">
+<td align="left">Internet_serviceDSL</td>
+<td align="right">0.588</td>
+<td align="right">0.261</td>
+</tr>
+<tr class="odd">
+<td align="left">Internet_serviceFiber optic</td>
+<td align="right">0.843</td>
+<td align="right">0.538</td>
+</tr>
+<tr class="even">
+<td align="left">Internet_serviceNo Internet</td>
+<td align="right">0.145</td>
+<td align="right">0.038</td>
+</tr>
+<tr class="odd">
+<td align="left">Technical_supportNo internet</td>
+<td align="right">NA</td>
+<td align="right">NA</td>
+</tr>
+<tr class="even">
+<td align="left">Technical_supportYes</td>
+<td align="right">0.665</td>
+<td align="right">0.142</td>
+</tr>
+<tr class="odd">
+<td align="left">Streaming_VideosNo internet</td>
+<td align="right">NA</td>
+<td align="right">NA</td>
+</tr>
+<tr class="even">
+<td align="left">Streaming_VideosYes</td>
+<td align="right">1.365</td>
+<td align="right">0.369</td>
+</tr>
+<tr class="odd">
+<td align="left">Agreement_periodOne year contract</td>
+<td align="right">0.200</td>
+<td align="right">0.000</td>
+</tr>
+<tr class="even">
+<td align="left">Agreement_periodTwo year contract</td>
+<td align="right">0.119</td>
+<td align="right">0.000</td>
+</tr>
+<tr class="odd">
+<td align="left">Monthly_Charges</td>
+<td align="right">1.003</td>
+<td align="right">0.857</td>
+</tr>
+<tr class="even">
+<td align="left">Total_Charges</td>
+<td align="right">1.001</td>
+<td align="right">0.003</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="reduced-model" class="slide section level1">
+<h1>Reduced Model</h1>
+<ul>
+<li>Significant predictors were term, internet service no internet,
+agreement period one and two year, and total charges</li>
+</ul>
+<table>
+<caption>Reduced Logistic Regression Model Results (Odds
+Ratios)</caption>
+<thead>
+<tr class="header">
+<th align="left">Predictor</th>
+<th align="right">Odds Ratio</th>
+<th align="right">p-value</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">(Intercept)</td>
+<td align="right">1.630</td>
+<td align="right">0.061</td>
+</tr>
+<tr class="even">
+<td align="left">Term</td>
+<td align="right">0.926</td>
+<td align="right">0.000</td>
+</tr>
+<tr class="odd">
+<td align="left">Internet_serviceDSL</td>
+<td align="right">0.556</td>
+<td align="right">0.065</td>
+</tr>
+<tr class="even">
+<td align="left">Internet_serviceFiber optic</td>
+<td align="right">0.894</td>
+<td align="right">0.671</td>
+</tr>
+<tr class="odd">
+<td align="left">Internet_serviceNo Internet</td>
+<td align="right">0.129</td>
+<td align="right">0.000</td>
+</tr>
+<tr class="even">
+<td align="left">Agreement_periodOne year contract</td>
+<td align="right">0.181</td>
+<td align="right">0.000</td>
+</tr>
+<tr class="odd">
+<td align="left">Agreement_periodTwo year contract</td>
+<td align="right">0.101</td>
+<td align="right">0.000</td>
+</tr>
+<tr class="even">
+<td align="left">Total_Charges</td>
+<td align="right">1.001</td>
+<td align="right">0.000</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="stepwise-logistic-results" class="slide section level1">
+<h1>Stepwise Logistic Results</h1>
+<ul>
+<li>Significant predictors were term, technical support no internet,
+agreement period one and two year, and total charges.</li>
+</ul>
+<table>
+<caption>Stepwise Logistic Regression Results (Odds Ratios)</caption>
+<thead>
+<tr class="header">
+<th align="left">Predictor</th>
+<th align="right">Odds Ratio</th>
+<th align="right">p-value</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">(Intercept)</td>
+<td align="right">0.606</td>
+<td align="right">0.319</td>
+</tr>
+<tr class="even">
+<td align="left">Term</td>
+<td align="right">0.927</td>
+<td align="right">0.000</td>
+</tr>
+<tr class="odd">
+<td align="left">Technical_supportNo internet</td>
+<td align="right">0.270</td>
+<td align="right">0.011</td>
+</tr>
+<tr class="even">
+<td align="left">Technical_supportYes</td>
+<td align="right">0.637</td>
+<td align="right">0.080</td>
+</tr>
+<tr class="odd">
+<td align="left">Agreement_periodOne year contract</td>
+<td align="right">0.200</td>
+<td align="right">0.000</td>
+</tr>
+<tr class="even">
+<td align="left">Agreement_periodTwo year contract</td>
+<td align="right">0.117</td>
+<td align="right">0.000</td>
+</tr>
+<tr class="odd">
+<td align="left">Monthly_Charges</td>
+<td align="right">1.012</td>
+<td align="right">0.079</td>
+</tr>
+<tr class="even">
+<td align="left">Total_Charges</td>
+<td align="right">1.001</td>
+<td align="right">0.003</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="perceptron-model" class="slide section level1 dark">
+<h1 class="dark">Perceptron Model</h1>
+</div>
+<div id="full-model-1" class="slide section level1">
+<h1>Full Model</h1>
+<ul>
+<li>Includes all the variables. Numeric variables were scaled,
+categorical variables were converted to dummy variables</li>
+<li>Weights indicate that streaming videos (no internet), monthly
+charges, sex (Female), have strong positive influence</li>
+</ul>
+<table>
+<caption>Full Perceptron Neural Network – Result Matrix</caption>
+<thead>
+<tr class="header">
+<th align="left">Metric</th>
+<th align="right">Value</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">error</td>
+<td align="right">0.0126</td>
+</tr>
+<tr class="even">
+<td align="left">reached.threshold</td>
+<td align="right">0.0095</td>
+</tr>
+<tr class="odd">
+<td align="left">steps</td>
+<td align="right">100.0000</td>
+</tr>
+<tr class="even">
+<td align="left">Intercept.to.1layhid1</td>
+<td align="right">-1.5170</td>
+</tr>
+<tr class="odd">
+<td align="left">SexFemale.to.1layhid1</td>
+<td align="right">-0.5295</td>
+</tr>
+<tr class="even">
+<td align="left">SexMale.to.1layhid1</td>
+<td align="right">-0.6308</td>
+</tr>
+<tr class="odd">
+<td align="left">Marital_StatusSingle.to.1layhid1</td>
+<td align="right">-0.2157</td>
+</tr>
+<tr class="even">
+<td align="left">Phone_serviceYes.to.1layhid1</td>
+<td align="right">-1.9458</td>
+</tr>
+<tr class="odd">
+<td align="left">International_planYes.to.1layhid1</td>
+<td align="right">-0.3901</td>
+</tr>
+<tr class="even">
+<td align="left">Voice_mail_planYes.to.1layhid1</td>
+<td align="right">-0.2306</td>
+</tr>
+<tr class="odd">
+<td align="left">Multiple_lineNo.phone..to.1layhid1</td>
+<td align="right">-2.2922</td>
+</tr>
+<tr class="even">
+<td align="left">Multiple_lineYes.to.1layhid1</td>
+<td align="right">-0.0478</td>
+</tr>
+<tr class="odd">
+<td align="left">Internet_serviceDSL.to.1layhid1</td>
+<td align="right">-0.4440</td>
+</tr>
+<tr class="even">
+<td align="left">Internet_serviceFiber.optic.to.1layhid1</td>
+<td align="right">-0.3280</td>
+</tr>
+<tr class="odd">
+<td align="left">Internet_serviceNo.Internet.to.1layhid1</td>
+<td align="right">-0.8579</td>
+</tr>
+<tr class="even">
+<td align="left">Technical_supportNo.internet..to.1layhid1</td>
+<td align="right">-0.6097</td>
+</tr>
+<tr class="odd">
+<td align="left">Technical_supportYes.to.1layhid1</td>
+<td align="right">-0.1890</td>
+</tr>
+<tr class="even">
+<td align="left">Streaming_VideosNo.internet..to.1layhid1</td>
+<td align="right">0.6980</td>
+</tr>
+<tr class="odd">
+<td align="left">Streaming_VideosYes.to.1layhid1</td>
+<td align="right">-0.0192</td>
+</tr>
+<tr class="even">
+<td align="left">Agreement_periodOne.year.contract.to.1layhid1</td>
+<td align="right">-0.5605</td>
+</tr>
+<tr class="odd">
+<td align="left">Agreement_periodTwo.year.contract.to.1layhid1</td>
+<td align="right">-0.4707</td>
+</tr>
+<tr class="even">
+<td align="left">ChurnYes.to.1layhid1</td>
+<td align="right">10.8148</td>
+</tr>
+<tr class="odd">
+<td align="left">Term_scale.to.1layhid1</td>
+<td align="right">-1.3392</td>
+</tr>
+<tr class="even">
+<td align="left">Monthly_Charges_scale.to.1layhid1</td>
+<td align="right">0.5239</td>
+</tr>
+<tr class="odd">
+<td align="left">Total_Charges_scale.to.1layhid1</td>
+<td align="right">0.0469</td>
+</tr>
+<tr class="even">
+<td align="left">Intercept.to.Churn_num</td>
+<td align="right">-5.2526</td>
+</tr>
+<tr class="odd">
+<td align="left">1layhid1.to.Churn_num</td>
+<td align="right">10.1725</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="reduced-model-1" class="slide section level1">
+<h1>Reduced Model</h1>
+<ul>
+<li>Includes most important predictors from the full model</li>
+<li>Strong influence from term and total charge</li>
+<li>Moderate influence from agreement period</li>
+</ul>
+<table>
+<caption>Reduced Perceptron Neural Network – Result Matrix</caption>
+<thead>
+<tr class="header">
+<th align="left">Metric</th>
+<th align="right">Value</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">error</td>
+<td align="right">49.5837</td>
+</tr>
+<tr class="even">
+<td align="left">reached.threshold</td>
+<td align="right">0.0086</td>
+</tr>
+<tr class="odd">
+<td align="left">steps</td>
+<td align="right">2002.0000</td>
+</tr>
+<tr class="even">
+<td align="left">Intercept.to.1layhid1</td>
+<td align="right">-0.2363</td>
+</tr>
+<tr class="odd">
+<td align="left">Term_scale.to.1layhid1</td>
+<td align="right">5.9524</td>
+</tr>
+<tr class="even">
+<td align="left">Total_Charges_scale.to.1layhid1</td>
+<td align="right">-7.0861</td>
+</tr>
+<tr class="odd">
+<td align="left">Agreement_periodOne.year.contract.to.1layhid1</td>
+<td align="right">1.2362</td>
+</tr>
+<tr class="even">
+<td align="left">Agreement_periodTwo.year.contract.to.1layhid1</td>
+<td align="right">2.5294</td>
+</tr>
+<tr class="odd">
+<td align="left">Intercept.to.Churn_num</td>
+<td align="right">3.1122</td>
+</tr>
+<tr class="even">
+<td align="left">1layhid1.to.Churn_num</td>
+<td align="right">-6.8599</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="decision-trees" class="slide section level1 dark">
+<h1 class="dark">Decision Trees</h1>
+</div>
+<div id="non-penalized-decision-tree" class="slide section level1">
+<h1>Non-Penalized Decision Tree</h1>
+<ul>
+<li>Non-penalize model, no deductions for false positives or false
+negatives</li>
+</ul>
+<p><img src="Final-Presentation_files/figure-slidy/unnamed-chunk-8-1.png" width="768" /></p>
+</div>
+<div id="penalized-decision-tree-false-negatives"
+class="slide section level1">
+<h1>Penalized Decision Tree (False Negatives)</h1>
+<ul>
+<li>A false negative would mean that the model incorrectly identifies a
+customer as a churn risk when they would actually stay loyal</li>
+</ul>
+<p><img src="Final-Presentation_files/figure-slidy/unnamed-chunk-9-1.png" width="768" /></p>
+</div>
+<div id="penalized-decision-tree-false-positives"
+class="slide section level1">
+<h1>Penalized Decision Tree (False Positives)</h1>
+<ul>
+<li>A false positive would mean that the model incorrectly identifies a
+customer as loyal when they actually leave</li>
+</ul>
+<p><img src="Final-Presentation_files/figure-slidy/unnamed-chunk-10-1.png" width="768" /></p>
+</div>
+<div id="roc-curves" class="slide section level1 dark">
+<h1 class="dark">ROC Curves</h1>
+</div>
+<div id="logistic-roc" class="slide section level1">
+<h1>Logistic ROC</h1>
+<ul>
+<li>Stepwise narrowly beats Full which narrowly beats Reduced</li>
+<li>Stepwise is the ideal final logistic regression model</li>
+</ul>
+<pre><code>              Model       AUC
+1     Full Logistic 0.8042817
+2  Reduced Logistic 0.7915127
+3 Stepwise Logistic 0.8081395</code></pre>
+<p><img src="Final-Presentation_files/figure-slidy/unnamed-chunk-11-1.png" width="768" /></p>
+</div>
+<div id="perceptron-roc" class="slide section level1">
+<h1>Perceptron ROC</h1>
+<ul>
+<li>Perfect AUC for the full model, most likely an error, attempts to
+correct it were unsuccessful</li>
+<li>Leads to the reduced model being the optimal perceptron model</li>
+</ul>
+<pre><code>               Model       AUC
+1    Full Perceptron 1.0000000
+2 Reduced Perceptron 0.7410074</code></pre>
+<p><img src="Final-Presentation_files/figure-slidy/unnamed-chunk-12-1.png" width="768" /></p>
+</div>
+<div id="decision-roc" class="slide section level1">
+<h1>Decision ROC</h1>
+<ul>
+<li>There are 6 curves cause each model has a gini and info curve</li>
+<li>The decision tree that penalized false negatives has the strongest
+results</li>
+</ul>
+<p><img src="Final-Presentation_files/figure-slidy/unnamed-chunk-13-1.png" width="768" /></p>
+</div>
+<div id="bagging" class="slide section level1 dark">
+<h1 class="dark">Bagging</h1>
+</div>
+<div id="bagging-1" class="slide section level1">
+<h1>Bagging</h1>
+<ul>
+<li>Now each of the final models need to be compared</li>
+<li>Logistic and Decision Tree models are similar and strong</li>
+<li>Perceptron model is the weakest of the three models</li>
+</ul>
+<div class="plotly html-widget html-fill-item" id="htmlwidget-a7db0c07017a0556109f" style="width:768px;height:480px;"></div>
+<script type="application/json" data-for="htmlwidget-a7db0c07017a0556109f">{"x":{"visdat":{"113b07a396613":["function () ","plotlyVisDat"],"113b04e5ca815":["function () ","data"],"113b0251f22e4":["function () ","data"],"113b01f2bb9c6":["function () ","data"]},"cur_data":"113b01f2bb9c6","attrs":{"113b04e5ca815":{"alpha_stroke":1,"sizes":[10,100],"spans":[1,20],"x":{},"type":"histogram","name":"Stepwise Logistic","opacity":0.59999999999999998,"xbins":{"size":0.0070000000000000001},"inherit":true},"113b0251f22e4":{"alpha_stroke":1,"sizes":[10,100],"spans":[1,20],"x":{},"type":"histogram","name":"Reduced Perceptron","opacity":0.59999999999999998,"xbins":{"size":0.0070000000000000001},"inherit":true},"113b01f2bb9c6":{"alpha_stroke":1,"sizes":[10,100],"spans":[1,20],"x":{},"type":"histogram","name":"Decision Tree FN","opacity":0.59999999999999998,"xbins":{"size":0.0070000000000000001},"inherit":true}},"layout":{"margin":{"b":40,"l":60,"t":25,"r":10},"title":"Interactive Bootstrap AUC Distributions","barmode":"overlay","xaxis":{"domain":[0,1],"automargin":true,"title":"AUC"},"yaxis":{"domain":[0,1],"automargin":true,"title":"Frequency"},"hovermode":"closest","showlegend":true},"source":"A","config":{"modeBarButtonsToAdd":["hoverclosest","hovercompare"],"showSendToCloud":false},"data":[{"x":[0.86634310890816413,0.83588870575988861,0.84627160663079248,0.85043802742898678,0.84905660377358583,0.84106087270430052,0.86780213721833266,0.81535603715170335,0.83794312872011112,0.83250035031995906,0.79536122016154465,0.82061486419261642,0.84811132390693211,0.83910459406122295,0.87609623463600239,0.84048535069547192,0.863458528951487,0.85293946686197142,0.84948121719160341,0.8285804816223068,0.81009230343746863,0.8446873946747554,0.82561342592592568,0.82821334430823834,0.84977804084048569,0.83479905119942832,0.85175989029255239,0.84440936171193381,0.82866980911309707,0.86046086529343813,0.82356843870251861,0.83499481523378583,0.8554669268954983,0.8356800166875249,0.8566824002447444,0.86443692672549,0.82623860657445847,0.8622240580109235,0.84538069668181171,0.85531943938842314,0.85287955016277117,0.83819444444444424,0.84629529587765961,0.83681037473976383,0.84308680949545567,0.84231244945530626,0.83721683896684773,0.86008857054010857,0.88009861048857008,0.82909960432773233,0.82073568905381333,0.83278276955602504,0.82541461228148882,0.85399883637665575,0.86109718182730122,0.85634558237297975,0.84099204396325611,0.84866868891135738,0.84150999999999843,0.84367627232895293,0.82247279402123974,0.84129629629629621,0.83818451990734699,0.83736337612768974,0.80947782734190543,0.82672962858721433,0.86614872364039808,0.84365849394694192,0.8152287924478826,0.83428714388466751,0.83441239316239291,0.84855236182586502,0.84169923534409463,0.83758117813845379,0.84534555944324385,0.82701014481356216,0.83786511061631408,0.8291362220334183,0.83887057598889703,0.81878787878787807,0.84387565811342435,0.87151620370370164,0.84813009208591694,0.84385069817400615,0.83868800839674618,0.85311809685641316,0.84936843832021036,0.82751638150709994,0.83754919096280178,0.8380916475305894,0.85819863945578367,0.84279065654053276,0.8468753961211809,0.85500165000691852,0.85215749501463822,0.83666633502470733,0.8562521065048877,0.83305343249820152,0.83586029511303495,0.84876253132832069,0.82084997016843186,0.85335164308753542,0.82493605442176954,0.8703325717187107,0.86834067486702093,0.83808022300670659,0.83253572833355116,0.85119529874366673,0.85074215997181124,0.86748299319728051,0.85893877551020492,0.83724585800174434,0.85065866023936099,0.8358567095823346,0.85606738964613738,0.83449781180419191,0.84292644552248619,0.83956380655978957,0.83282378591700268,0.81466741838844114,0.85449663823834698,0.84158253572833353,0.8311371880599624,0.85705882352941154,0.8241423038694875,0.85065170940171009,0.83934294871794879,0.82020606060606027,0.83122469903076868,0.87421183102068378,0.83965670316661678,0.8188459049478457,0.85546455424274992,0.82643603777517027,0.83883793115474459,0.84851156462585098,0.85786324786324686,0.86121223152529958,0.83433392315470212,0.83787960832092467,0.82488425925925946,0.84339622641509315,0.81224292812407439,0.81045751633987007,0.8320601851851861,0.80636027255087572,0.8624185783064271,0.87851851851851881,0.82850434215995739,0.8509252357649818,0.82773733316597553,0.86157858277983856,0.85815170940171026,0.8417669459253615,0.84238425925925797,0.86427086427086464,0.8356371467917445,0.86052994102199754,0.82753759398496252,0.84923642088690687,0.85067129629629634,0.85154270546555588,0.86199175149375729,0.85245449531163775,0.83943435964296687,0.86295079204583802,0.83014365046583161,0.82534661534007425,0.85330906226381098,0.82454080784574413,0.84243477120755128,0.85039989510947744,0.83397198731500988,0.85841571555857199,0.8362100085736196,0.8360535292574115,0.85724355531686403,0.84207209896196045,0.84225666711790947,0.8351518367437184,0.82958375463431022,0.86282286613347248,0.83792657447020114,0.85780778657616874,0.87681366252794846,0.81788728405550848,0.85171296296296251,0.88588659147869697,0.8431080058351893,0.82748299319727814,0.85182844624199494,0.85145455920320789,0.86744442895591756,0.85590204081632604,0.85086538461538475,0.84217066284941811,0.82813175582720866,0.82392698781695439,0.84331008652976935,0.83203162977606393,0.84002917208358618,0.85243355598112969,0.87234330580749952,0.85343478310541354,0.83521075780675902,0.83000774893452067,0.85440621531631444,0.86149638802889672,0.81564874753729322,0.85246604395108472,0.82907051282051381,0.86052582509789244,0.85298497360227399,0.85927741151977788,0.84947007444050016,0.8250981453905496,0.86973180076628209,0.81383790771013931,0.83565170940170885,0.86399730202041936,0.85384017758046571,0.85521382044746508,0.8427757023226059,0.87132831675866229,0.8479524496306976,0.83130548034410634,0.86991455586398281,0.82159870635024557,0.85980606060606135,0.84284722222222153,0.84635606835110277,0.83832745789267449,0.84938081781914865,0.83030175806874873,0.81963530655391115,0.85611778958158613,0.81477654352880335,0.86508244005338264,0.84888560687432901,0.84594994771120025,0.83995384492351244,0.82918973690876863,0.84341720056005909,0.82684342191601123,0.85301423200859272,0.81053057121629402,0.83112421816767823,0.84468524251806043,0.83725509028044587,0.85100408163265395,0.8700391809908995,0.84691022373265312,0.84227750994123374,0.8520450208188759,0.84556764012641261,0.85666830708661634,0.85832952526021855,0.82873065294887449,0.82472222222222302,0.85203020917306738,0.8330719197990587,0.8476269866514573,0.82819346140883077,0.83665510797117992,0.85416602794044028,0.85303285402256912,0.8469611528822063,0.85513101966462812,0.82960755091902738,0.84783029833397905,0.83853443789035453,0.8249221183800628,0.82460186332553187,0.83114578411827567,0.85700332963373982,0.83845767230453161,0.81516472868217138,0.85863448444934898,0.85580908688478452,0.85628367771224945,0.85023421235253349,0.84648266791123916,0.82715864437248598,0.86050950825970052,0.83097675225537637,0.86567067440127154,0.82689069894430201,0.8494367346938787,0.84399615109201664,0.82737322939340951,0.8511845297559576,0.83009616777544015,0.83514590046545056,0.82611137949242197,0.85133013704442217,0.83511510953366386,0.83757859470375018,0.83010169968680758,0.80899617764834464,0.85479346742021178,0.83148323631605026,0.86040819894235376,0.86028257456828949,0.86598808831755714,0.85152613677049838,0.86066523424334407,0.82393469387755169,0.84113350928285402,0.85585139182522907,0.85273520084566623,0.86179735051915562,0.82912104172832124,0.85458333333333314,0.84097067435863726,0.88654213763297973,0.85531631520532592,0.87058823529411666,0.82758875817822553,0.81089235377026048,0.85208015706748907,0.82777641076115505,0.84054042331714052,0.86811795278364967,0.86260885124656994,0.86022286821705518,0.82937082535382334,0.8162749149769688,0.79153780798640683,0.8296554146839964,0.8141578007212591,0.84920584765756713,0.84864704785512901,0.85269437524583747,0.85853814305849152,0.82992154483228397,0.83634574779734339,0.84354711518726255,0.84823652812376993,0.8352436630068768,0.84720310765815654,0.84553541696398915,0.85747685185185007,0.84330885887854512,0.87394555321543765,0.85321023818670694,0.87224007634006417,0.84929958825635421,0.83559646109472818,0.84177056789224636,0.84833351427640868,0.85053302177425971,0.84370068027210743,0.84533479567239134,0.8671901709401707,0.83903437418000659,0.8629633740288557,0.82067702552719302,0.85214372830471863,0.86856650554958892,0.84994131905978887,0.84250354007363382,0.8321939443165931,0.82973333333333321,0.85166171595850104,0.84241460222914222,0.8421198326771665,0.88072514778213895,0.83682870370370355,0.83260114639554861,0.81297074122901147,0.84481734481734727,0.86120749479528047,0.82165568072170092,0.85204690440130237,0.86258850184083824,0.83605455243949378,0.85420560747663454,0.83350605645260334,0.82905126336248736,0.83467258601553851,0.84484297736185765,0.85067755102040854,0.84733629300776858,0.83996831055654619,0.84761209228648704,0.85778316301911717,0.86138017133755262,0.83695744410030204,0.84520999956295595,0.86974959379573347,0.83642576565643634,0.8497219510589985,0.87748854827343215,0.82233469387755265,0.84971091875877436,0.85647370645828258,0.84745578231292684,0.86858042635658927,0.81911496350364998,0.8388671875,0.86283914982944232,0.86038757608306493,0.8546367521367525,0.85798095238095273,0.8358046614872372,0.8307852176123991,0.82003411006044702,0.87087014982712385,0.83210197545739906,0.82154460538784313,0.86535259133389852,0.83857147324639647,0.846005378209577,0.87288163698471233,0.83954175225598182,0.84827602766039345,0.8550196882780714,0.8189442028034809,0.84142903308483696,0.87395519538376687,0.83048141296687772,0.82504400361543306,0.86114781536293095,0.85467164862304257,0.84445742661019429,0.85949326458132635,0.86073442679409395,0.83492311858694512,0.85707175925925927,0.82389008234872929,0.84893747724790547,0.85128707482993327,0.8204941860465117,0.81593784683684845,0.83833959763509658,0.87135483564054728,0.83025783619817983,0.83367628082167966,0.85087363306314434,0.87363213101295289,0.85684076262083775,0.85035714285714348,0.84262799644865416,0.82607290656826238,0.82035405585106302,0.82907173952965874,0.87206437291897787,0.8621396594284777,0.85157745681110131,0.83439102564102552,0.82587210884353746,0.84689844317173502,0.83392806570376499,0.83431102091722908,0.83570910012791122,0.84557692307692411,0.85260056425191033,0.83963494132985894,0.86726861797350518,0.84741730385638092,0.87050043427443946,0.83882478632478708,0.80767886018967738,0.83331038597457296,0.84413289475084974,0.83919958136148431,0.79889962763064259,0.83074661899068825,0.83917303879920813,0.85769081887602272,0.84939110733503165,0.87009970725173147,0.85045403245011919,0.83919455782312979,0.82920052546530432,0.82796116504854345,0.86824167395836793,0.84975412408886353,0.83867677221923675,0.83985400262467291,0.82186645925829993,0.84649122807017496,0.85873261870937267,0.8345789154094071,0.86088894716139996,0.83607074829931916,0.82417956656346836,0.85285879629629624,0.84689210384881164,0.8194942198155285,0.8451152230424146,0.8362020645522914,0.84382668216453516,0.85032894736842124,0.85958511175363739,0.80655092592592526,0.81847946725860055,0.84487236403995614,0.83197061138808759,0.820960377853582,0.86325231481481335,0.82030959752322141,0.82186093265154347,0.8355671296296292,0.85918843061700123,0.85916058561659503,0.87056623931623778,0.85019066446295366,0.83982024608138672,0.86477259515278448,0.83960943595392146,0.83694327873290819,0.84342529943490652,0.87092391304347849,0.88943620313068661,0.83732898205096162,0.85365321951443474,0.85657861476238684,0.82580937874712412,0.85618192776271018,0.85037098542671496,0.83957538167939005,0.83104993666102533,0.85647082712873934,0.8391962047977074,0.81356236869600396,0.84911631307765389,0.84433359760394766,0.85569683883424208,0.82941742014237674,0.83388966306942858,0.85524244732165633,0.83620203628162926,0.8677080224189968,0.84490618393234618,0.86347940173182947,0.80789448646591477,0.84014502992021201,0.8450814536340856,0.81069876960832921,0.80933612091715967,0.84069222761970919,0.82933924528744618,0.84908992686170193,0.84562424242424239,0.8404899999999994,0.89009310751601001,0.85765210428754757,0.85404445571868071,0.85185185185185286,0.85608438765048522,0.84907800499076425,0.85548148885130237,0.81951564625850382,0.82592383761276922,0.8469961527079013,0.84401651550020296,0.84959049409237353,0.83925392216606221,0.81258743005595602,0.87142133544749911,0.85109420099711264,0.84199707262473711,0.8425819994752034,0.86614035087719266,0.84877825797872308,0.86387688665285578,0.80780249410178651,0.83288587550054483,0.85891425177139502,0.84799775307601855,0.86300925925925831,0.84880417547568654,0.85032796660703447,0.84491692575134814,0.83564625850340202,0.81608707482993259,0.8745076978159686,0.85558979065600271,0.85102719066369736,0.87455049944506213,0.86009805749635238,0.84609430567758537,0.83755245701908687,0.85630550819599272,0.82698527162274316,0.86638998360827213,0.81430632630410626,0.84440450465425432,0.84127997956120371,0.84262377138696698,0.86528462192013633,0.84016214326296923,0.8286839726204317,0.85960468103325061,0.84949022581732314,0.85512390225072021,0.8229583710017645,0.84727360817477138,0.83933683206106902,0.84935720650006308,0.82477846907993935,0.82275168088082629,0.83214179642751018,0.83250097924011013,0.84866876119194878,0.83604883462818969,0.84780248105208922,0.86021250990032783,0.85869400946302465,0.84457011359185297,0.84747583243823943,0.84826594465852523,0.8528995014431906,0.84460599334073172,0.84049000226852966,0.84776270756749961,0.84236441946281948,0.85709214649432108,0.86696735537646796,0.85940297171500213,0.84600950042355039,0.81451730684971502,0.85678198095358937,0.85185831037328896,0.82293007769145299,0.81964564538515006,0.8587193004476803,0.83213118927404639,0.84570802005012502,0.84746077531576458,0.81211487036391194,0.81908282777216024,0.82469474871991433,0.81264604331601142,0.81387708188757935,0.81176607371236043,0.83056903107381608,0.85114694148936088,0.81798664122137477,0.83399993566304487,0.85170332085911282,0.84281909879336347,0.86284481263011892,0.82345344181841662,0.8274798527509698,0.85513291855203433,0.84871731709892051,0.86539319727891173,0.86948571428571564,0.82650634249471577,0.85652391445512432,0.8291473571636897,0.8368028941962774,0.83541447109294431,0.85857843919990595,0.85140562248995988,0.84056230497860784,0.82122905027932969,0.83431655579264397,0.84428433164856387,0.82741612069612502,0.81470225510923167,0.83799145299145239,0.85053237872320953,0.82028112449799229,0.81924533987687709,0.82921511627907019,0.84275853128949751,0.84286909795630716,0.83854232040500476,0.83975014324072306,0.84628717077315108,0.85953411127136048,0.85091627965357142,0.84445061043285186,0.84934517203107507,0.85031213964769981,0.83487844202129946,0.83176691729323304,0.84197771796823961,0.86267457611284915,0.83206070889894512,0.84719652924594679,0.85208428535161096,0.83039607141218108,0.83492408881855407,0.82296981853585294,0.84459257785294872,0.86914912868989591,0.86458196757134753,0.85761111839517457,0.85603530534351158,0.85615862487738836,0.8305793542714377,0.87201875942684759,0.8436397559484865,0.86946235862203147,0.82450610432852367,0.8629247038634289,0.84671764372698932,0.85281575741166815,0.8725438428958221,0.83995387490556217,0.84125698112800007,0.84564552929527748,0.85197492458521817,0.85248931623931579,0.83462608239307279,0.83152049199137146,0.8368211012723995,0.8299281033855116,0.86249742002063934,0.84539270253556054,0.85808282931624003,0.84544871794871723,0.8468050819748707,0.84859240138743208,0.86909214552873293,0.84176333589632391,0.84630175756986692,0.85354137751561399,0.85455438644594617,0.83271979570855237,0.82947642148507439,0.84037087206315075,0.82874781310244372,0.81050935288169978,0.84567644961091615,0.83075855478704086,0.851638023630504,0.85243397309711366,0.86039000984252045,0.84294416462180854,0.84533932620667296,0.85733877551020488,0.84681675930683376,0.86621249300443304,0.82331397243037363,0.83613095447560781,0.8567945578231303,0.83274536505859997,0.84929487179487251,0.86711701943095032,0.86643729189789187,0.85458238131505437,0.82468410351398247,0.83459963002114135,0.81708342647888632,0.8426770969143873,0.82253625134264285,0.86679172449687658,0.85127024953747588,0.85112101743805024,0.85626431369813649,0.85144688160676507,0.85628205128205259,0.87877380912899627,0.84668590921018105,0.84335444787141112,0.82722310983390268,0.87748388829215895,0.83022435897435798,0.8451613582743509,0.84892517006802681,0.85830858147738998,0.82419397463002098,0.81184383202099808,0.82353414624331023,0.84382204398503025,0.86385948671725654,0.85033564814814844,0.85728734349387781,0.85479294941446282,0.83940608206753076,0.84477404862579331,0.85183885226661826,0.84643162393162497,0.8774224806201546,0.82669496678053012,0.8419283483691874,0.8349342770475221,0.846636932513959,0.84955128205128183,0.82270299145299108,0.83599713740458037,0.85589051393449134,0.84269466112382552,0.84982014388489147,0.83652301620083569,0.83981841763942899,0.86576094532431247,0.85336853030097937,0.84188574317492404,0.84010236373399172,0.85642619311875623,0.84593112189152508,0.8626313186868616,0.84146971458091036,0.87786268300518666,0.82281908990011066,0.85080640805435848,0.84593020042229006,0.85985891909993573,0.82300421999790707,0.84148399886717618,0.84941943182339785,0.84998674794593065,0.84249612986904188,0.82842131818231668,0.86506815159574357,0.85497458012282124,0.83179586029648001,0.83080556284439833,0.85522476633203059,0.83663706992230791,0.8761810101564016,0.84668370424806139,0.81502890173410369,0.85035948307244258,0.85625089196517767,0.85528869942526597,0.8580101840971408,0.84802937115601729,0.83759701063524061,0.8273666057180844,0.84363537414966039,0.85348290598290633,0.869071404785691,0.84428739927248209,0.86162770674587863,0.85775391336002771,0.82674489751322022,0.82453663026651658,0.86658789997442098,0.82583313340416575,0.83686530612244947,0.8518102536997888,0.86360112795047794,0.84011972789115674,0.82579966782569181,0.88218390804597691,0.85599932591843653,0.83442160904321883,0.83869352382704254,0.86035058683432097,0.84410265744448443,0.84892370345744617,0.82471396862501078,0.78472841773812596,0.84604311615313499,0.84095149253731316,0.82124199528142894,0.82911209766925542,0.83185887476086307,0.83943561926901844,0.85317853457172321,0.82803237745614133,0.8372728170141821,0.85953363025745932,0.85016736927488634,0.83072636949516543,0.89023644071500396,0.8376581576026626,0.85575279880026445,0.81972081972081812,0.83965128383067444,0.82259591836734858,0.85326230565156436,0.84707368801046801,0.85541389112817678,0.84548611111111016,0.81389420012747049,0.85797790994052581,0.84950055493895604,0.86138734739178513,0.84459408743391928,0.83766381507098675,0.86573569558818575,0.83203265306122354,0.83491012826084698,0.85898625184339616,0.84684188352723977,0.82897466556294719,0.82008626001232254,0.81226110302147758,0.86031374987936671,0.83882720333102201,0.83429723977312109,0.83200800519486062,0.84685904550499502,0.83498335183129768,0.85022195254367161,0.84693388604731656,0.81775134522797976,0.85506552124250779,0.84741398446170924,0.86236771339347662,0.8464849972017745,0.82535912616457741,0.86686546764824746,0.81560971261101722,0.85135405105438322,0.83623028340428174,0.85052896892514829,0.82987755102040928,0.83438467593807375,0.84240199291988915,0.83345717234262162,0.8222491793920369,0.84757355336011342,0.82437015503875921,0.86026801965780708,0.82986215580739942,0.84013830162086045,0.83858875889857476,0.85937500000000067,0.84951488134259856,0.85975943714189418,0.83806058806058892,0.80555466845506107,0.85867746119409272,0.84888474681578141,0.84540073825788153,0.81792641997018922,0.83571581196581168,0.83894230769230849,0.85645612556848361,0.84869991682060364,0.82346256288842856,0.83471420452846046,0.86441707147813984,0.86504994450610428,0.85466107250557255,0.88203705160036416,0.85412901248269535,0.83117659007539579,0.83024246049899653,0.81280965273954919,0.84760281456230047,0.86131274606299379,0.87320052954727911,0.86642567350954447,0.83119518735957187,0.84928768093589824,0.82836957578507453,0.83418564850658061,0.8475419714095741,0.84714248800710013,0.86317749365017937,0.85158951210142175,0.83468749999999969,0.85692965874042448,0.86578246392896752,0.84569074778200193,0.80143237644273357,0.84363295880149725,0.8465336178402586,0.84128938868544212,0.84499427413671646,0.87809829059829192,0.84741056438073026,0.83561598224195277,0.84990990393437893,0.86760691022373093,0.84602242723573473,0.84847645997375376,0.82417782734106038,0.81939544708821599,0.85345457163722993,0.86914196793688869,0.83664931498099726,0.82929937647455243,0.85399883637665541,0.85621070518266751,0.8517644173283857,0.82806881243063235,0.87393939393939102,0.84206164707908238,0.84906844608879561,0.84368966423324188,0.80982434553863114,0.83844674620864423,0.83004385964912331,0.86224761904762026,0.85751560898332135,0.84419260299312715,0.83488805970149227,0.84798740488060864,0.86048546521048741,0.85399584755604119,0.85435507970924929,0.86900410631289315,0.84500240374109425,0.8457832366507867,0.84481378496798076,0.82736859391678763,0.80797346690131344,0.86288286435662709,0.82376555168108945],"type":"histogram","name":"Stepwise Logistic","opacity":0.59999999999999998,"xbins":{"size":0.0070000000000000001},"marker":{"color":"rgba(31,119,180,1)","line":{"color":"rgba(31,119,180,1)"}},"error_y":{"color":"rgba(31,119,180,1)"},"error_x":{"color":"rgba(31,119,180,1)"},"xaxis":"x","yaxis":"y","frame":null},{"x":[0.72285463635306735,0.69264120121732953,0.6624161222211159,0.71505336858597734,0.70741554127879025,0.69404201376312935,0.69626908599166382,0.70269404905011745,0.67197888962765917,0.68813804703052062,0.6627832515082408,0.67121356696738399,0.6818630280766208,0.69892698781695373,0.71204110956334776,0.65740280126908346,0.70217448921974257,0.70537392588614412,0.67182050167708618,0.71997709865940795,0.72909980048577328,0.70460069444444473,0.6940627202255113,0.67618781897022739,0.7044128317544025,0.73810484103296858,0.71164682699731574,0.69968354068844163,0.70596330790576434,0.69838541666666731,0.6738116428441222,0.72126745435016149,0.71838632898619026,0.69415164909894622,0.67419474673309709,0.73856789200803363,0.69990241418812771,0.67152576988388657,0.639345506592644,0.72874669875973752,0.70012083780880841,0.6996252828054299,0.66537928302634208,0.71871663971419719,0.68601553829078765,0.72367956283244761,0.66363056604161652,0.6898080012582718,0.68740163959719791,0.68893858913428407,0.73603098640793563,0.70959371213502187,0.71690021094321754,0.70991281576342058,0.70088255942232502,0.69276457281672388,0.71223259040458375,0.70216598639455741,0.70425811068702249,0.66099133814921751,0.68279861017102084,0.72258484906359899,0.68061081836756587,0.69964316057773912,0.68108334480701227,0.67190660962424953,0.68020795413178037,0.6739048575373412,0.68822312925170015,0.69312985571587105,0.67960069444444393,0.684282382073647,0.6716702630015341,0.72677398435211971,0.69530954618617125,0.68146802099835335,0.69737513873474011,0.73282669518531818,0.70221766591251966,0.6752760894720875,0.70520550877693733,0.66891160146202777,0.70935156397998667,0.70649296138447637,0.70651372437086757,0.67886164684546413,0.69436898869169894,0.70150091839412221,0.70975120708927197,0.67886234591173389,0.71927035531663774,0.72322105662285296,0.70757902257458605,0.71704112798627717,0.69463541666666662,0.70915094339622597,0.68739781670474598,0.66427741185586953,0.70041401561301486,0.66828816180583828,0.69864341085271353,0.7284162182541043,0.69973416849627579,0.6920062606390871,0.69830688556054432,0.69014428412874484,0.72078911564625892,0.70985777874280742,0.69946925651867586,0.6709780092592591,0.72413194444444495,0.66890677025527223,0.70974322975507531,0.69769466695127558,0.70642686298263591,0.66791292517006828,0.69234021414000513,0.72457219363206427,0.69263635972276005,0.71132840028188815,0.6809939393939396,0.70563809523809495,0.7325756643700797,0.70972484772106736,0.75253862897950785,0.69484848484848494,0.70044753325085074,0.6625696594427245,0.67430783502212122,0.72753741496598612,0.70638010853236077,0.68776205001656521,0.70768054375531075,0.69492639766433828,0.67137576641695329,0.6582411073696689,0.72130930294195561,0.7336088510052089,0.69706316011193725,0.69924216000253603,0.6789275258990396,0.69326624710458407,0.68843711267837393,0.69884451996601471,0.68592534906933078,0.72364625850340081,0.68194450337307522,0.71354425761947338,0.72270303069012909,0.66225832438238541,0.70430819234577358,0.68819127306017702,0.73321018461505183,0.65820680673132936,0.71285969984854702,0.72459350764586006,0.67969603203494744,0.71487149683585083,0.68193795111548605,0.68257995334903154,0.70105596730983699,0.70551634571370747,0.70689615944666917,0.67980476715809202,0.69775140946636871,0.69254635326063918,0.66433940824264681,0.70292244897959189,0.68382878265461389,0.64997454283168665,0.73086258103663104,0.72374650512581551,0.65602783645546181,0.68602663706992228,0.71934862645143027,0.70150943396226384,0.69515732521420648,0.6862476061469478,0.71129833512352392,0.69826479911375239,0.67118103747397706,0.69326983408592968,0.68231154580152686,0.6645903937073756,0.70730941038032169,0.6939986331070882,0.67301854792537685,0.66596253444707754,0.68603824107777989,0.70421515468602991,0.72545950620592303,0.6945472992761802,0.67977424531575292,0.68437726747810457,0.71992925170068012,0.72394013605442253,0.71976303735024738,0.67766415444434047,0.72774440492713488,0.66982100225772689,0.67348465280468528,0.72483823227576749,0.67791540276373419,0.7098183760683755,0.70078911564625734,0.71585403453136121,0.70633654141598434,0.68599183673469477,0.65501870945795371,0.64799663513061878,0.70330511475934265,0.67600406194465601,0.69756690492021245,0.72131661103369316,0.72063565177337663,0.6938215648854964,0.70987961396875965,0.72343697337377699,0.71941549872588295,0.69450800915331867,0.70588369129959938,0.71719755826859122,0.68911601462027849,0.71005549389567024,0.71621034332898692,0.67326002696326226,0.69934330580099846,0.71751242837883422,0.68730769230769317,0.69512209175030792,0.69686168328934917,0.71167818536239569,0.65460595407864353,0.69625034013605325,0.6933359760394634,0.67134032580997494,0.69964293215711015,0.72070729258190036,0.72598009343895975,0.69843830280436381,0.69166377515614175,0.70314126474670358,0.71637809428467469,0.71468289501321103,0.70639737339568298,0.70141219614192718,0.67479228550518677,0.71645165212969442,0.69798085748000482,0.7140577603640037,0.68573765551681098,0.67662057618215454,0.71240288568257426,0.69361645299145358,0.70057242730290525,0.67882993197278951,0.68874999999999942,0.70546474358974309,0.72832687187631351,0.6993092845013541,0.71187921007489163,0.70069115646258462,0.71149748159628057,0.67989316239316266,0.731836734693878,0.69063332559502177,0.66674790555978691,0.69903437418000525,0.69240830019589261,0.69621531631520572,0.7243734571775241,0.74140120703227541,0.71421568627450949,0.69721078955612459,0.69674659237886838,0.70892678376410589,0.73217467860325114,0.71095699517127442,0.71552530334418429,0.68856825749167594,0.68781869085257485,0.6750179936251155,0.72728707482993149,0.6960656998005319,0.65722261224216905,0.72199007285068439,0.68067475584492487,0.70838368242033667,0.68791918131723884,0.71563326057627863,0.70207814343778596,0.72368108082393845,0.69211935404890457,0.7104820870922971,0.69614728873352649,0.64871966311245721,0.70284472035247958,0.72977959183673502,0.65991121633619354,0.68971436566361,0.68198976547799273,0.69085170068027235,0.71714785940803383,0.67899319727891061,0.72438923123989285,0.74035772037935454,0.68073528787814575,0.71183491895701201,0.72005549475453101,0.6919098971113693,0.67183095501859114,0.68868769276688824,0.74977848662059154,0.71985061039146248,0.66945458016886583,0.72814272082131448,0.69663612388070628,0.70290713415459583,0.68910360800492243,0.69884566729917874,0.70730574369943078,0.66975768241505362,0.72432755997135734,0.71853496115427273,0.68478801726326399,0.70531748033914188,0.69393302523080735,0.68844268476621506,0.75814564925086425,0.70525873600194577,0.71980325244354582,0.70938751365125519,0.6938094608879497,0.6728335270566953,0.70717035353156288,0.67501701396765712,0.70861664479701036,0.70073198198198228,0.68914041994750641,0.69537927350427342,0.73078622164870588,0.67613788936627217,0.70655166828636151,0.67641828591256103,0.6990371269951422,0.71770913426715255,0.67494194279241015,0.69996035117530286,0.70588038645405038,0.69636389975373048,0.71630083959725011,0.69775732142051416,0.68290249826509331,0.66465877277525387,0.6904564498833724,0.71119654276030797,0.69860971578572206,0.68747429763588452,0.66331853496115478,0.71476583277925565,0.68937742248062051,0.68268770159358716,0.73629424011103473,0.69684439130863973,0.67792126876239056,0.69973352713178216,0.68886437334937956,0.71396117306897999,0.75019878081102553,0.68303355765017815,0.66859517277028924,0.7097656856770731,0.70714138286893757,0.70114442995798942,0.69032114336634987,0.70331520766201316,0.68432163075020336,0.68913774580783671,0.71542908942172689,0.67423978184354849,0.69129542436315405,0.71360137961868852,0.68048989417071504,0.71840559845775087,0.69509109040414263,0.69786584072298441,0.70009142287233972,0.70740693166425372,0.6858583540929154,0.71598058314438118,0.70585968517913045,0.69200054837714697,0.69101105523327377,0.68474358974358895,0.7063671732799417,0.70388518815610368,0.68701623363039133,0.69320255474452519,0.70595757575757589,0.67603324077427673,0.73195028114826921,0.69056474401595702,0.66023634919893404,0.70919356345462137,0.67117537313432885,0.70298231292516955,0.66792081033429695,0.71671148507980709,0.68381985375324039,0.70031040572111747,0.70018880733166511,0.67590085158851809,0.68103293949158572,0.72522265485141424,0.7130965593784675,0.68709161296097399,0.6856295149638818,0.69228435474084371,0.67902682346723031,0.68052109883885648,0.67299386860007193,0.69363334276018129,0.67148652980908419,0.69746078721515248,0.67948474890461719,0.68757921419518342,0.70734870143186346,0.71666890440386743,0.69766546668979934,0.67045071437705528,0.70781980682662504,0.70338820051830242,0.70551049618320605,0.7021869885646983,0.69660837023772471,0.68377136752136691,0.67210252093192568,0.69663134200292032,0.69477797438490008,0.66313250819075353,0.70969130557915605,0.7056570512820507,0.73202730876840383,0.67930543229482931,0.71617092119866732,0.6891072075335013,0.678863187847078,0.70645709430756176,0.70488068703290863,0.69268486615425418,0.71266026149179296,0.67389626998974683,0.70897603764144912,0.70371156462584983,0.71043235056766008,0.67470033296337495,0.70053238686779118,0.71636321427387084,0.70566333838894535,0.7042725056453697,0.72534897534897524,0.67915064102564116,0.71262152777777776,0.71862847222222115,0.70092418672720314,0.70146646583824945,0.73012800122846122,0.69617258861063747,0.70205386208937548,0.70696941632335863,0.72100998890122003,0.69203706131724985,0.70501331754957097,0.71786049946294406,0.6881322915321364,0.72963996280058496,0.69286834629432648,0.70109931972789175,0.70672535626588229,0.6921412526427061,0.70480196553728747,0.67966209720106718,0.71177746882372694,0.68334874911909649,0.68810379102291275,0.68457195820694317,0.68608935974205454,0.70230465997181102,0.71280210655128629,0.69229793575799803,0.713536324786325,0.68535197172968065,0.69485170205594882,0.67730472451604151,0.6854861758310038,0.68012998536512304,0.69870674389644838,0.69522103936590063,0.72206064253000446,0.69929582871746598,0.6916000846900463,0.70528027135928184,0.67558140830631108,0.68453629649053771,0.71671913218018868,0.67264733336161942,0.67859591836734667,0.70677291293771982,0.70006112010637056,0.66652660391855545,0.71927107641393428,0.71720210833639875,0.70886992140168725,0.69954328919190578,0.70915379944482948,0.70637663696610298,0.69637624861265279,0.70231016560958426,0.66909898795374056,0.72059071350731907,0.74571152845246302,0.68838577097505582,0.70356827302824154,0.7226503582202104,0.71148553025997729,0.67047081990691026,0.69281553398058193,0.7201020813004626,0.66497542773935181,0.73476974924585203,0.70273558434028149,0.7066814650388451,0.67339345264264117,0.67791378505664279,0.70800627943485117,0.71826515449499573,0.72774884259259265,0.71207523919134241,0.72583333333333233,0.68721629700704945,0.6645038781036311,0.73857380688124341,0.70630654254621694,0.6789823518443372,0.68818532557195,0.73805259841475079,0.67777016323825123,0.66524625850340091,0.70060567652925365,0.67219904788838636,0.7018563497571142,0.72381505876275387,0.72485460859378403,0.68350855083518569,0.6994207766391336,0.71261978856545827,0.67404905447605901,0.69757823129251706,0.70605390687450065,0.68894497618111061,0.68855271008306862,0.71683618147120143,0.69601170993075601,0.70810209654686507,0.67144433884170818,0.67898269430950775,0.68841880341880324,0.72154298326122179,0.69011406844106415,0.68100338966694451,0.71449280267135884,0.69638629283489095,0.7038352272727284,0.70048937227172337,0.73429982009120964,0.70646381024603977,0.6684791767309658,0.70954290479944282,0.67806874836001052,0.664260850126145,0.68323859224055006,0.6901820114255347,0.69447182101387717,0.72433668600761181,0.70534416814889689,0.65734138260114194,0.73313540510543884,0.68329078801331855,0.69681781444890944,0.69416551608719324,0.68011666434338625,0.71998239338526171,0.69295188668117791,0.70628571428571429,0.70099399369282123,0.7066954185520351,0.71038367346938647,0.68641419611028287,0.70617476851851901,0.70249055963341767,0.70402106720155755,0.70246671722278409,0.71377506981467265,0.67035545549671816,0.72723212363855549,0.70290064102564132,0.71043804811731837,0.68803403899138504,0.68559792337987857,0.70706985244348153,0.71053191013247419,0.70496695052106906,0.6920605708381764,0.69261176040488492,0.6804664592016717,0.67905813641245927,0.723269230769231,0.70545525902668793,0.72504624377880633,0.70751106002775865,0.6886934703675559,0.69435866451843953,0.68020096056622825,0.72384675938073995,0.71416196245812147,0.68647308552354414,0.72414552501761975,0.72057739298955148,0.71878979902463225,0.7230908152734794,0.67510299236738658,0.67399370815519966,0.69826447241863976,0.67654928646934454,0.69399854803581507,0.68198717948717924,0.71251616754551717,0.6885971171685461,0.70503849211330116,0.69795944627328255,0.67737513213530709,0.66405483675089949,0.69593469387755114,0.67414115975720035,0.68920062271558136,0.67905435165609584,0.71195488398123041,0.70221640806785324,0.70117647058823573,0.68361084788592552,0.68417735042735062,0.68929979237504913,0.68154531251922112,0.72682336968051242,0.67787435672147611,0.72639919629257732,0.67298539969347437,0.68768302282865301,0.69918931202502854,0.69652547944594889,0.66652931991672471,0.7120221212538429,0.74563081811672083,0.6775271019419028,0.73670679909302927,0.71035196911866838,0.69320624476491288,0.68619099069148903,0.69511501516683527,0.69562858037952047,0.67040500000000036,0.69261746370444888,0.69627676626980262,0.68462585034013601,0.69539158081585462,0.69935794175777732,0.6654453980467594,0.73715597902457419,0.70339576813489679,0.70304367626648145,0.71532839326206621,0.70211092172544898,0.7031609556085533,0.69253929429314121,0.68877562169485529,0.71799253653262651,0.71377864846646477,0.70778276955602593,0.71300761980267746,0.70914222772958924,0.70404248887221033,0.69309277047522755,0.72229964027611304,0.7053773584905656,0.71724625850340185,0.67210884353741585,0.73200587563244601,0.68215400122240111,0.68275276515672956,0.70969361869557457,0.69228411735372375,0.64593288561711704,0.68810884353741508,0.69515147107712849,0.71619089035918793,0.67749167591564874,0.69060486036519975,0.68944287784655833,0.67959912330316641,0.68299638830162035,0.69233250887192266,0.71870647098808871,0.72032108843537423,0.67783204228446603,0.67983759160229873,0.71298141567422302,0.6832985109276033,0.69876753638389821,0.69417762049207843,0.68012505919324973,0.69644663825612374,0.72074889372617512,0.67474281826606153,0.72839364538263107,0.73959373959374042,0.67738351027974231,0.67734129224812489,0.69987149479094968,0.6897274510719793,0.70271844660194172,0.68838390619405654,0.70370530636467066,0.69184145779735118,0.70489379779099459,0.70497954426525866,0.6836785343621683,0.67354912714628856,0.69281462585033993,0.70061574857117559,0.6965807713991975,0.71437283047190214,0.67694114425345475,0.68689736988237693,0.69088160996078773,0.67660380160380107,0.68608966001404204,0.69336054421768745,0.6939215686274518,0.70780876314245789,0.72830630243942329,0.69699223085460593,0.69953238483732882,0.67530931898413205,0.69681698229460887,0.69441753842179998,0.70139310570320768,0.71525383364913686,0.67534463126941446,0.68966603654694392,0.69931289151297493,0.70991829820578711,0.71209056036436513,0.68669004265091882,0.69815277889812011,0.70390936668882986,0.69400501884831778,0.7036776433061257,0.72201373904160393,0.67977003691289462,0.69484625850340209,0.7154632503756686,0.72545528080798982,0.66935772665992654,0.68600797216349518,0.71018506086645217,0.71380706260371507,0.69607225372820802,0.65539639875879641,0.66517203107658174,0.71137026239067025,0.70518141340866558,0.6830404334038056,0.71705496905715349,0.72056256713211686,0.7121688819758667,0.71141019780585035,0.6934755551898284,0.6856234430313356,0.70400271899619993,0.63940427238992992,0.69982796892341914,0.67529725091654691,0.70118949514226259,0.68659861246635656,0.66363856589147341,0.71850209411185029,0.67742282639478946,0.70339802511831107,0.71215756233595751,0.66308405487023536,0.73943951165371713,0.68861495647209836,0.69430615890329916,0.69477576335877889,0.69446311947752537,0.66802977116732454,0.70264565156206082,0.71247502774694704,0.69777966581704887,0.72686945500633637,0.71544111169837976,0.70987634816312695,0.70843938536953255,0.70802119094887672,0.69346487071883056,0.69663824396682961,0.72237366880224152,0.68680283934521213,0.71793457507743297,0.71740454076367388,0.6736052109883891,0.68997004167633913,0.70595573755818108,0.69517821031344773,0.71286984707446777,0.71031627588189128,0.69581351303735006,0.697483720117128,0.68944761904761864,0.69894058482291255,0.68060119649477602,0.71515838635440521,0.67064902464487286,0.73352029914529948,0.72812499999999925,0.68230871439219642,0.70316186383552415,0.71426404752939299,0.70575855478704042,0.69557265463154772,0.69709420711436143,0.72237270965468692,0.68945471456807339,0.68552246383856796,0.70196798740488064,0.68083240843507242,0.67324008132937319,0.69390242604243235,0.72110532407407346,0.72404371584699512,0.73354745370370356,0.70959770778047049,0.71496037346650776,0.68191199924946178,0.71972214366515697,0.70657367945240857,0.67988141202426844,0.71618475494276235,0.73822769917945408,0.69569743233865367,0.70116996902711282,0.68192189354567334,0.68704250593164728,0.70265365761689291,0.70403582581540669,0.68385526779422101,0.73396257541478116,0.71885123096857706,0.66303524714305406,0.70881292872921808,0.70728707482993303,0.69571850230491061,0.67783258987142569,0.70086033442031481,0.71612391297354716,0.69341346153846228,0.70886083307176317,0.70213232072440446,0.71831543439350065,0.7033637504155098,0.69324439491280943,0.68532427074483093,0.66759776536312909,0.71081116116278398,0.67509988901220819,0.71191292517006854,0.69664157242507674,0.70716567726815516,0.67853411376122041,0.6770105302394932,0.70031436581388973,0.72925160478834128,0.71509133048786033,0.71242244559300683,0.72012833392747333,0.69863945578231257,0.67995286064832672,0.71578573542468171,0.68828355507782069,0.6736486819413644,0.67455662393162374,0.71683532975354503,0.70007460322326842,0.67189333164219778,0.69749785659491825,0.69727066124732251,0.69002410574539352,0.73791994163101426,0.70378903175019647,0.68952795576948533,0.68795854315730021,0.70487433358720408,0.66385561521868841,0.69834957947707421,0.69050207602066627,0.68892361111111133,0.68586591334472591,0.67598727802809422,0.68972171440178776,0.67722575696042631,0.69806365010410965,0.67442708851523991,0.72104489795918314,0.67546763690398093,0.6955498011450546,0.68838950053705705,0.71524234693877509,0.7247788458467731,0.7094956735115574,0.71339704679495464,0.70179307752683606,0.71254991050530048,0.72243879969891367,0.70407377689104866,0.6970739385600061,0.68438360182302238,0.70959219093733161,0.68429102292958599,0.71863193015496585,0.664362237348328,0.75882808250700762,0.6831161078499649,0.66302827673615572,0.72276107893203501,0.67840919262441846,0.6821922709923659,0.68524625850340193,0.71176974390523406,0.70796414957435294,0.67824360916058579,0.67587829463316118,0.7135315769081747,0.72554752895310204,0.69582513123359546,0.70399556048834566,0.69600501348163157,0.67996942227619694,0.70801670003640305,0.72702788339670432,0.71401207032275038,0.6867319727891158,0.69435184189458821,0.69708197691624785,0.69233120084756183,0.71464758173238929,0.70508166969146979,0.72816564621108926,0.70352540697217214,0.70934212194194479,0.65702760226880152,0.68587680355160952,0.68181715626551276,0.67945244044058151,0.67228704024982611,0.70912001223722765,0.71827220604295605,0.6786358918821348,0.72874984719449043,0.72247074829931823,0.67694488747120318,0.65223749300248002,0.67663306173180493,0.65526371063133559,0.71945601851851815,0.6946019743751316,0.6833965073778262,0.70039782034566889,0.70644858179275338,0.6947926765397433,0.74434494077351143,0.71409220037073229,0.71883809020436917,0.69336937175958191,0.7007673469387754,0.71723698580269435,0.6872841773812649,0.68541489662985011,0.71209191031860486,0.66549565296866142,0.71675177936959444],"type":"histogram","name":"Reduced Perceptron","opacity":0.59999999999999998,"xbins":{"size":0.0070000000000000001},"marker":{"color":"rgba(255,127,14,1)","line":{"color":"rgba(255,127,14,1)"}},"error_y":{"color":"rgba(255,127,14,1)"},"error_x":{"color":"rgba(255,127,14,1)"},"xaxis":"x","yaxis":"y","frame":null},{"x":[0.85258536129665108,0.86597033880063701,0.825896729701596,0.82448663308795045,0.82872928176795579,0.861170921198668,0.84715944491645423,0.80848290598290595,0.8249303939494681,0.86971582635602462,0.83717414529914524,0.829192546583851,0.83459482414068742,0.83546938507932345,0.8597219694211865,0.87536673322195502,0.84982063083795845,0.82832219946600338,0.85010453439352895,0.83225317153888589,0.85717166595604921,0.86027007897900265,0.80177145125881633,0.83509599401595747,0.87589525877434604,0.83075153125708912,0.8238957688338493,0.82436440439945635,0.85905612244897944,0.85103448982939622,0.84881358307253951,0.84478991777519485,0.84181435732187615,0.8188010342255061,0.8419228600802573,0.88237276710481949,0.83736203828469757,0.8457548981943912,0.81834188977046129,0.84023741874381175,0.82926336261527045,0.85891700680272109,0.86538652870361155,0.83179510107623034,0.86349482103054931,0.86235119047619069,0.8374598956476651,0.85947916666666668,0.86783018867924533,0.82923058432760799,0.86221320826467229,0.85111519286276582,0.86687483600104964,0.87344528995014425,0.83294578319860479,0.84215375503175338,0.85986118651465304,0.86541910865864657,0.86096978928662082,0.8253671398350555,0.82458214803898044,0.84658853301021897,0.82587059507978733,0.82066592674805761,0.82950718978622595,0.85038699690402486,0.83306145567827827,0.84742407125072661,0.8388411230186219,0.86154914529914517,0.82927786499215062,0.84556900219718911,0.82630813953488369,0.81968085672617319,0.87934852448483181,0.85865437651151921,0.84333477429923542,0.81468276520228611,0.83466346153846149,0.81173970086591463,0.84124803767660894,0.86468984683270389,0.83502136752136757,0.8657555675344305,0.82975436519680401,0.89327669215519701,0.8872752639756476,0.86202775417728694,0.85861522198731488,0.84061460841646596,0.82482391240011843,0.84622395693713204,0.84712665546289523,0.84155161078238006,0.85387142452563025,0.83819794222738819,0.87031836771080584,0.83469478357380689,0.85377506265664149,0.83319727891156459,0.82939997003883414,0.84389039424757473,0.85366469319381333,0.82943702290076327,0.85332503007270688,0.84855242610463877,0.8391073212501784,0.85051642882311485,0.85667161737483311,0.83084081632653062,0.86402126930432588,0.83010999182056922,0.86642637967600744,0.86412517006802736,0.86748043319985424,0.87468299319727882,0.85517417162276987,0.83048894317749689,0.82463616100694892,0.84351957566243285,0.86161970043158143,0.8499768518518519,0.80986821647240481,0.85674473821884189,0.86193851056954029,0.86266466310559287,0.86276724823229167,0.84467597843817188,0.85735709552540718,0.82350476190476196,0.85027471008965383,0.83957718940056825,0.84449509316699234,0.86195596022213605,0.85302326124527061,0.8187874097007225,0.84170740838618752,0.81795411172796673,0.86669256381797999,0.84295100538091217,0.82167311872958315,0.84678966274892753,0.81545728431967857,0.84994680325980831,0.82571265497669399,0.84207967361089087,0.83122165390744274,0.82636528377958163,0.83966079786513192,0.83667427630275926,0.86333905919661735,0.86450002185219177,0.84009706732755074,0.86910790144435002,0.87924237139444672,0.82871894401612722,0.85888761406405822,0.83214995899383226,0.79166666666666674,0.83015842266132844,0.83852564102564098,0.80303784034756076,0.85465209792084407,0.85127159444916434,0.85191906752654711,0.84671500179018977,0.84571364928507775,0.87239265722237869,0.83829633740288556,0.8529113247863247,0.86716081318608418,0.82712981686488218,0.84994450610432848,0.83880606060606078,0.82686473757902335,0.85439259775146748,0.8566913167938931,0.8306214637181808,0.86623401782254938,0.87567118674918087,0.82936598639455772,0.8546710047324354,0.867646751181959,0.8544684680777237,0.85885527802184025,0.86572553135659935,0.85262857706946282,0.84307807957196068,0.8533844420298603,0.82991837414626024,0.83295884778285834,0.84419366581725519,0.8697172326384337,0.8247365111034004,0.83181644042700797,0.83369110039764927,0.84198819591261453,0.86655092592592597,0.86628027210884351,0.84373348308668061,0.86573413826011436,0.81313652521082846,0.87022802542069455,0.85635481267756663,0.85822844281281407,0.82925365574348131,0.84971153846153857,0.85493124154983635,0.83711391068887975,0.85233074361820205,0.82471643518518511,0.85971308509144351,0.83690920930870194,0.85476487041650284,0.84731333118256447,0.84834170190274838,0.85070036274638339,0.85096870342771969,0.85429609042925869,0.84772383760873482,0.82036779575328611,0.85264408793820556,0.85099319727891154,0.83851230278396927,0.85330128205128208,0.85290454443841213,0.83040749194414609,0.79040882631650178,0.84705439814814831,0.86473917869034411,0.84399886717643735,0.84559003300598989,0.80071372343217007,0.8706401160731625,0.85757378301558229,0.82066074051834126,0.84072397160538759,0.8620173083349657,0.84807100104094379,0.84693854432172189,0.82418503401360543,0.86684366942004276,0.85984965326570018,0.86421472711394109,0.84156176343131339,0.82663131041890436,0.81798075681260496,0.87136802274576952,0.83321725864756402,0.85647570111409921,0.81797278324987011,0.82122046053934594,0.78908278451955116,0.84270495548200897,0.85490992776603225,0.81689730045046494,0.82536007409063317,0.84094306132934737,0.83993096357226782,0.82782358807192868,0.8433396507377825,0.85143174250832387,0.8481029753989362,0.84275582246330016,0.80151390233119446,0.85218463706835812,0.87023576553909221,0.85615507193082152,0.84117596223439328,0.85574149181915926,0.83596205087763309,0.81857817801312738,0.86444207671445183,0.86590898378582193,0.86342857142857143,0.85998794880319152,0.84098572047647735,0.86469482898054317,0.83717731475670465,0.84880770320022647,0.85157364109707168,0.87188571428571426,0.86494166415939544,0.86870012144344211,0.87212121212121196,0.86279314357321879,0.83981249537580194,0.8287074829931973,0.88230302516016812,0.8420795848121897,0.82542788805019729,0.85895634401047494,0.83082061784921568,0.8198511800210776,0.84236620413705121,0.83390879164477427,0.87563263041065476,0.87088953030700611,0.85464676267672823,0.81432852386237498,0.80939972029194529,0.83661586809591471,0.83865384615384619,0.85902777777777772,0.86166373791891571,0.8490078840732912,0.86707858048162234,0.87056845251996817,0.8324631735968675,0.84147106815614425,0.81933399874960244,0.80808683206106857,0.80977289727393609,0.84616508072036034,0.84864738805970141,0.84810025881454454,0.84561851056211945,0.84063043501744605,0.85379721131717878,0.81928012377138693,0.84166847865478001,0.84213346546975654,0.84092793420223533,0.85313115157480301,0.84646082755723584,0.84926358113718803,0.87215375202132772,0.85109877913429521,0.83365303014450298,0.82822801006245661,0.83447850599013396,0.7958951685688499,0.86111199821160544,0.84177036199095012,0.84626652251246826,0.85513200198204631,0.8621883290526472,0.84454965986394559,0.8347782734190502,0.85642027754177286,0.82482916716938492,0.87905671296296295,0.8521169942054756,0.82205732826084477,0.83646559048428215,0.83504389691305581,0.83372453960140835,0.82409550686495225,0.8370698006152929,0.85790929441646224,0.83779099405267643,0.86625432516388645,0.85868435182963765,0.84074296427367712,0.82450610432852389,0.87630903386170089,0.88163706992230861,0.8478109351376274,0.86225313978886053,0.83977822965700877,0.8634976364220478,0.8315104166666667,0.84924482565728143,0.84591445814746802,0.84974013389711056,0.84495144267643219,0.82299413921924813,0.83999933671608118,0.8546944858420269,0.85318480787300344,0.85843127125575791,0.83965494092373805,0.83626405464736653,0.83353724157462472,0.8729316050744621,0.87145035153722128,0.82645570933059831,0.84544395116537185,0.85718057318758367,0.87414896629849881,0.83631308201072707,0.8713653531124862,0.83518890923593714,0.86665398315206477,0.86751387347391784,0.79949931972789123,0.82813296054675378,0.861857162626811,0.86333616539224023,0.83347250387689364,0.84084302325581406,0.84122845139794278,0.85303285402257023,0.86699489537062935,0.84871939206304536,0.82080349417810716,0.85487709907755749,0.8247469041690888,0.86156233890162437,0.82782671282174303,0.84355294502312095,0.82841508918820539,0.85763714772841249,0.84184294871794862,0.82038461538461549,0.86096491228070171,0.82494021027931952,0.8332559339525285,0.84641733315851575,0.8350856050531914,0.83038155165912531,0.83652777777777776,0.80101104324015271,0.83100435707997644,0.84086958310618287,0.85540627778657496,0.82703137142188021,0.85902701079788546,0.82858022490844863,0.85088530655391115,0.84678608605135319,0.83649957519116391,0.83791345155904517,0.86206725687103591,0.84922863485016653,0.83338123676002518,0.85568832796276406,0.81731978660652327,0.84262644892182004,0.82581599661834093,0.8470588883016209,0.82165771751001093,0.83685442176870739,0.85937820699787204,0.85356373111442341,0.83661506707946331,0.81196054920007332,0.83162114501312323,0.85106727814060701,0.82389671043725465,0.85217292672651257,0.88910256410256405,0.86503638710856723,0.83290911735372319,0.82479350173081534,0.87412364563416201,0.86268082688693681,0.84794494720965319,0.84046342933402218,0.83000140127983546,0.83053110155588195,0.84419260299312449,0.86210125274441429,0.86036368245773753,0.84889679556032938,0.85687382297551784,0.8565295421754584,0.84941823949584305,0.86154363289382374,0.83278564206268957,0.84213460138332707,0.81873279181090131,0.85557419314757877,0.85430452415993541,0.82006718270775536,0.85193376068376048,0.82513624957162901,0.85854154528110049,0.8512339743589743,0.84741441704205422,0.84726318528799438,0.81240040562074467,0.88310635538261983,0.84630751181152286,0.85151247050893164,0.86360089320015376,0.84735764891104692,0.83971963637952873,0.82295880275019773,0.85671648670761358,0.86030663422101883,0.81747159090909083,0.84251125387876402,0.87144759219477275,0.80273030881332408,0.828092364208869,0.82450011516820054,0.8400936117157719,0.85476318821278707,0.85997335997336,0.84791843670348355,0.84304217687074834,0.83663201615494054,0.84188969588432339,0.83198509667024689,0.83607371794871799,0.87469941701563625,0.8676549145299145,0.79734395607930619,0.85930884353741499,0.82147283675730232,0.83654005984042556,0.85181341083043238,0.84486543866632902,0.88763543868921768,0.86285121690378197,0.80435132266054743,0.86974030503852617,0.81616870898159621,0.84458206943040104,0.84698180937279777,0.86558063341827451,0.85148479206739436,0.88519484282196137,0.87799512657371059,0.80629746701175276,0.86110939112487106,0.81356816909897112,0.85232416199457717,0.84429928866622284,0.83748690194553366,0.81888662387231081,0.84933650287364959,0.87058090888768258,0.85120463354474973,0.8672900313767189,0.83609296109296105,0.84084347935232839,0.8466775510204082,0.83580074321014208,0.85346710982718788,0.83917418459403192,0.83714323467230434,0.85269561068702282,0.8394900767782123,0.84550748299319733,0.85758143059316461,0.83041065482796883,0.83457360683687365,0.87806287170773167,0.87412728249194427,0.8443474350396506,0.8762380581544571,0.86093165589935383,0.83255017183588631,0.87414740379619482,0.84467948717948715,0.83333520576108566,0.82813061224489803,0.83278917910447758,0.83879492600422834,0.87555056377730789,0.84514891615097876,0.85687334788474401,0.86755826859045504,0.82855017006802723,0.8485703795493138,0.82524686021113947,0.84510220887929866,0.84370524525599722,0.86512729875086747,0.86046258503401352,0.85252186100999972,0.85937499999999989,0.87585648570111185,0.85916079970248405,0.86073631348934421,0.85943537827739269,0.88298566201262452,0.79646112540047831,0.86962979766881632,0.84614091776544065,0.8421696969696969,0.85266925638179791,0.83180607769423542,0.80127175292941311,0.8300872860559747,0.8489521874043966,0.8378708757331732,0.84768282312925158,0.82974559686888449,0.87233330774039963,0.85097347518845978,0.86377186116085314,0.82553829078801344,0.81464270962412211,0.84851871959463054,0.84418494538407318,0.82892168698941604,0.79127670940170947,0.84098032827403368,0.85521239602160437,0.89571736561955695,0.85028576482163187,0.85975482197397601,0.83184794672586015,0.8832952761524191,0.84512619144245427,0.85251955771163856,0.82271469568705702,0.80785332988936231,0.84835125213058848,0.84187037585084346,0.86404489526957695,0.82602142609299101,0.84030095818344841,0.83498668703868073,0.8266281815796378,0.86098734340694816,0.84749355360342637,0.85417679402836733,0.84628013884979825,0.84042597251990581,0.8706739208779456,0.82954403851600123,0.84822337962962968,0.84720132829650452,0.83305696503388271,0.84218756537383377,0.86213096559378466,0.81905991546791068,0.83015107470049343,0.83110489777873375,0.84714150415429001,0.84254807692307687,0.83878123868163723,0.8206064419004393,0.82017485905567289,0.82634950470449708,0.84640731292517002,0.8525031685678075,0.89076851528891987,0.87734774870383281,0.85494258586235095,0.85565037300485769,0.85564036236280983,0.83278788647022906,0.87479551422790491,0.81720619658119653,0.84413539464411558,0.83140186915887848,0.81310483161487856,0.88649425287356332,0.84500416169073211,0.84573462531462318,0.83896117306897966,0.85136712845691176,0.80953045257443135,0.82625322319828676,0.84465403152419372,0.86228096807772381,0.83277353166306778,0.85236403995560484,0.82519403456522733,0.845575756290042,0.83856693326340626,0.84771949765430876,0.86638974326452511,0.83356752786382637,0.86121938865398173,0.81013808139534882,0.84437402920161553,0.86875573620034086,0.84053758004718571,0.8484623323013416,0.84343031115936939,0.82804232804232791,0.85726130069976458,0.84493322318601116,0.8485719698235995,0.83207342790306404,0.81207724623630739,0.86587076525617868,0.82819098178148742,0.83269835119893232,0.86292394199467293,0.85822021116138769,0.8288603853616715,0.8723217383761277,0.86168108911323815,0.85375966959486038,0.80711497444565183,0.85234850519155014,0.84936269470146697,0.8235570535048774,0.86353358981947326,0.86791399201943087,0.86525916532428515,0.86056623931623943,0.84298002219755819,0.82302040816326527,0.83747609942638612,0.833148299319728,0.82969701235176141,0.83946666666666669,0.84371747050659263,0.82971764652348012,0.86802900598404265,0.84382784843319791,0.84831583678078804,0.87033729358485334,0.84250485086413063,0.83790217047967153,0.83056924384027186,0.8435407857646231,0.87675675675675679,0.8407392316023119,0.84167232381518087,0.80202269753169975,0.84057358989424191,0.8685014699056165,0.8446635410921125,0.80339231133496913,0.86217064788493369,0.85239193629929222,0.88751226119856141,0.8295992960606472,0.80726819347783874,0.82877009995654072,0.85868479467258585,0.8510170571777339,0.85403553544430033,0.86182555517002091,0.83505965648354519,0.85069978632478616,0.84138211941805496,0.85230025546159272,0.82790343741800065,0.84466354109211272,0.81459800182071707,0.84600537820957655,0.86288412075267351,0.83235849056603761,0.83903001514525688,0.84855955340043177,0.83901821808082855,0.81028025313186103,0.84791919673837612,0.86670709322145012,0.86545148223823343,0.84370537156914882,0.85019977802441726,0.86163759125338457,0.86073806881243065,0.83640891919901039,0.84937284209606234,0.83921335447498246,0.86153948197525942,0.84499147764520777,0.84256566264388943,0.82451923076923095,0.8321995848562791,0.85985351784036024,0.848220322733649,0.84691575289923737,0.8361041794946581,0.8857309524581134,0.83407852130123661,0.83985126364188079,0.8073981536873468,0.83892440483877917,0.84230918248740794,0.83646721839955196,0.83745247148288982,0.83606407960625784,0.85459489456159832,0.82652559055118113,0.82909947195661471,0.84432297447280791,0.83383571194225747,0.83548031117521104,0.82957264957264965,0.82091583757332209,0.86288230617965778,0.86159691596613208,0.86836363636363634,0.81558777504550817,0.8394140278188813,0.82784150273561696,0.81193354290220476,0.83628714551682282,0.83858033858033854,0.85247479184971342,0.87961004273504251,0.84241632653061227,0.83485559778153906,0.84125743415463028,0.86253254258893186,0.85600694444444447,0.85407421554639318,0.87614911797431161,0.85221216525722332,0.80064636187455962,0.85293020807054876,0.85251969889934676,0.80499180924645064,0.86878597592883311,0.84403771903771907,0.81991771941489355,0.84932880203908245,0.83673266341657548,0.85385205594112934,0.83998988333548585,0.86615379820478733,0.82051802716483913,0.85233850008801082,0.83344527714932126,0.839627098722041,0.86100746268656725,0.86143620230117035,0.8251691875706092,0.80585128627928937,0.86275398317221608,0.84794362184128169,0.85768976897689764,0.86700870256474605,0.84691453940066586,0.85059933407325194,0.86477437537929835,0.84798651603498554,0.82378559993259182,0.87771920088790234,0.8425537642758778,0.87448390677025523,0.83698643931256711,0.81733997681949089,0.80094386327435541,0.84275374149659854,0.82152365827455753,0.83845220925658837,0.84635416666666674,0.85186545240893075,0.84058231292517005,0.86021650598404253,0.82926140287002048,0.84096562581999479,0.84598848451458886,0.88507386040819891,0.84206527484143767,0.81507049914229546,0.8578693109585559,0.80294695955319129,0.83712185497899783,0.80441743155340362,0.85452491527551155,0.85336271680882758,0.8328973335169122,0.83765122681554449,0.82293296713824926,0.83121851995350637,0.85376475510923178,0.82036490909680149,0.84033741496598635,0.85328634166143857,0.831559633027523,0.88899711514919255,0.85538845726970014,0.83511026727033744,0.82050957028774241,0.867504761904762,0.83613834509628582,0.8835349611542731,0.82119862675631505,0.82638888888888895,0.86200810185185195,0.84137512261198566,0.84775675871566281,0.82002500795208999,0.87733529205122474,0.84223239257564186,0.84336847946725868,0.81981292914194959,0.85284547409710376,0.83494091270026616,0.88724193268563489,0.85300065119786128,0.82094708459723631,0.86576630673715149,0.85612471923269351,0.86821163565974835,0.83541772868875674,0.8077960047324354,0.8426212755085748,0.79179764721132961,0.83936134850255728,0.79394131871315698,0.81632686508456809,0.83337384259259262,0.84007119247393836,0.88870753602358132,0.897832852119401,0.81770663867751259,0.85624978393390105,0.86291897891231961,0.83732155634538019,0.83897495815123957,0.85660907610257719,0.84919560185185183,0.85716506685122218,0.84781250000000008,0.84310130125327032,0.84778855819238685,0.84351052674034033,0.86355000910083746,0.84418355276976309,0.83437940451021853,0.81153846153846143,0.86881336731804026,0.84612759577515217,0.86119489750030143,0.81832494820952939,0.84247179218052992,0.84476423424115143,0.84786666666666666,0.84907146103518616,0.84993510541537654,0.82183405170085655,0.81082305131218169,0.8402548853016143,0.81978575929426589,0.86507439934473962,0.85608974358974355,0.84180712762467202,0.84765315182006507,0.81417442419474673,0.82536097442929746,0.83168525882394351,0.85330923401762138,0.84585010584506037,0.86315170940170949,0.87816725463494127,0.83674489669816088,0.81550757801877094,0.86315314411794208,0.85252401106144271,0.82534965986394571,0.85427941796026829,0.85069298160330997,0.84886699396703791,0.80859754616132162,0.81837075360107892,0.8299630354424874,0.8621658396968952,0.83094716251885359,0.84594679807557571,0.83750090599405658,0.82195828067105237,0.84738623751387354,0.83880710775391332,0.84808269612007936,0.84759111721120761,0.81767983285245238,0.83089226656218673,0.8539672654167213,0.86344242424242412,0.84267110513532262,0.79531991744066055,0.85098224195338523,0.85773477812177501,0.85498795791608562,0.85667482993197286,0.8308778721726352,0.86024470965800826,0.8273960299118992,0.83292679113112555,0.83518162393162387,0.86065949914776452,0.8203597644591436,0.86579256111868597,0.87078186537773006,0.82944506104328519,0.86422621506264641,0.82486755656952315,0.84437551020408164,0.84373348308668072,0.85027192008879027,0.86380919278732715,0.84305555555555545,0.79149324203365545,0.85801754839289535,0.832021579709468,0.85753052164261923,0.84327248278391265,0.84687935788117819,0.85821969579308133,0.84423226683923613,0.84992304321937739,0.83156014425183389,0.8670058139534883,0.84641696779935438,0.80314792553729308,0.83512972727976198,0.8349749610320697,0.83382303025160165,0.85650156141568357,0.85148299319727894,0.84202673537702599,0.8614599686028257,0.84084911473046675,0.81074939423233872],"type":"histogram","name":"Decision Tree FN","opacity":0.59999999999999998,"xbins":{"size":0.0070000000000000001},"marker":{"color":"rgba(44,160,44,1)","line":{"color":"rgba(44,160,44,1)"}},"error_y":{"color":"rgba(44,160,44,1)"},"error_x":{"color":"rgba(44,160,44,1)"},"xaxis":"x","yaxis":"y","frame":null}],"highlight":{"on":"plotly_click","persistent":false,"dynamic":false,"selectize":false,"opacityDim":0.20000000000000001,"selected":{"opacity":1},"debounce":0},"shinyEvents":["plotly_hover","plotly_click","plotly_selected","plotly_relayout","plotly_brushed","plotly_brushing","plotly_clickannotation","plotly_doubleclick","plotly_deselect","plotly_afterplot","plotly_sunburstclick"],"base_url":"https://plot.ly"},"evals":[],"jsHooks":[]}</script>
+</div>
+<div id="results-conclusion" class="slide section level1 title-slide">
+<h1 class="title-slide">Results &amp; Conclusion</h1>
+</div>
+<div id="results-conclusions" class="slide section level1">
+<h1>Results &amp; Conclusions</h1>
+<ul>
+<li><p>Final optimal model is the stepwise logistic regression</p></li>
+<li><p>Due to the smaller AUC and more stability</p></li>
+<li><p>Good amount of variable overlap with other models</p></li>
+</ul>
+<p><span class="math display">\[
+\text{Churn} =
+-0.5002 - 0.0758(\text{Term}) - 1.309(\text{TS_NoInternet}) -
+0.451(\text{TS_Yes}) \\
+- 1.612(\text{OneYear}) - 2.146(\text{TwoYear}) \\
++ 0.01183(\text{MonthlyCharges}) + 0.000642(\text{TotalCharges})
+\]</span></p>
+</div>
+<div id="general-discussion" class="slide section level1 title-slide">
+<h1 class="title-slide">General Discussion</h1>
+</div>
+<div id="general-discussion-1" class="slide section level1">
+<h1>General Discussion</h1>
+<ul>
+<li><p>Potential faults</p>
+<ul>
+<li>Argument for Decision Tree potentially being better</li>
+</ul></li>
+<li><p>Stepwise model might be harder to interpret to non
+statisticians</p></li>
+<li><p>If someone does not understand how to implement a model its
+useless to them</p></li>
+</ul>
+</div>
+<div id="thank-you" class="slide section level1 dark">
+<h1 class="dark">Thank You</h1>
+<p>Questions?</p>
+</div>
+
+  <!-- dynamically load mathjax for compatibility with self-contained -->
+  <script>
+    (function () {
+      var script = document.createElement("script");
+      script.type = "text/javascript";
+      script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+      document.getElementsByTagName("head")[0].appendChild(script);
+    })();
+  </script>
+
+</body>
+</html>
