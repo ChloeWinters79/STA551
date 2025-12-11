@@ -3,7 +3,7 @@ output:
   slidy_presentation:
     css: "https://chloewinters79.github.io/STA551/Presentation/custom.css"
     widescreen: yes
-    self_contained: false
+    self_contained: true
 ---
 
 ```{r setup, include=FALSE}
@@ -951,7 +951,7 @@ legend("bottomright",
 -   Logistic and Decision Tree models are similar and strong
 -   Perceptron model is the weakest of the three models
 
-```{r, fig.height=5}
+```{r}
 
 library(plotly)
 
